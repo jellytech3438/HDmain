@@ -6,8 +6,7 @@
   #define OPERATING_SYSTEM NULL
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
+#define MAIN 1
 #include "lib.h"
 
 int main(){
