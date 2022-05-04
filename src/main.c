@@ -1,3 +1,4 @@
+#include <stdio.h>
 #if defined (_WIN32)
   #define OPERATING_SYSTEM "windows"
 #elif defined (__linux__)
@@ -7,10 +8,10 @@
 #endif
 
 #define MAIN 1
-#include "lib.h"
+#include "../include/lib.h"
 
-int main(){
+int main(int argc, char **argv){
   while(1){
-
+    printf("test");    
   }
 }
