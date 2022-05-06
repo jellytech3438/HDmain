@@ -22,3 +22,10 @@ $ make install
 ```
 $ hdb init mydatabase
 ```
+
+---
+
+### TODO
+
+since this is a small project for school, we're probably not doing future update for this program.
+
