@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 #define MAIN
 #include "../include/hdlib.h"
 
@@ -9,7 +11,11 @@
   #define OPERATING_SYSTEM NULL
 #endif
 
-#define UNKNOWN "unknown operation: type \"hdb --help\" for more information"
+#define UNKNW_CMD "unknown command: type \"hdb --help\" for more information"
+#define OPEN_TYPE_ERROR "can not open the file, please select the file with \".hdb\" extension"
+#define OPEN_BROK_ERROR "the file is broken for some reason, please select the checkpoint file in the \"\""
+#define OPEN_DUPL_ERROR "the file name is already exist, would you want create anyway?[Y/N]"
+#define DELE_WARN "are you sure you want to delete anyway?[Y/N]"
 
 int main(int argc, char **argv){
   
@@ -24,7 +30,7 @@ int main(int argc, char **argv){
   if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0){
     system("man hdb");
   }else{
-    printf(UNKNOWN);
+    printf(UNKNW_CMD);
   }
 
   /*
@@ -35,7 +41,7 @@ int main(int argc, char **argv){
 
   if (strcmp(argv[1],"init") == 0) {
     if (argc > 4) {
-      printf(UNKNOWN);
+      printf(UNKNW_CMD);
       exit(0);
     }
     int fd;
@@ -45,6 +51,18 @@ int main(int argc, char **argv){
       
     }
     close(fd);
-  } 
+  } else if (strcmp(argv[1],"select") == 0) {
+
+  } else if (strcmp(argv[1],"create") == 0) {
+
+  } else if (strcmp(argv[1],"insert") == 0) {
+  
+  } else if (strcmp(argv[1],"delete") == 0) {
+  
+  } else if (strcmp(argv[1],"search") == 0) {
+
+  } else {
+    printf(UNKNW_CMD);
+  }
   
 }
