@@ -29,8 +29,6 @@ int main(int argc, char **argv){
     
   if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0){
     system("man hdb");
-  }else{
-    printf(UNKNW_CMD);
   }
 
   /*
@@ -39,7 +37,7 @@ int main(int argc, char **argv){
    * maybe add some easter eggs ?
    */
 
-  if (strcmp(argv[1],"init") == 0) {
+  else if (strcmp(argv[1],"init") == 0) {
     if (argc > 4) {
       printf(UNKNW_CMD);
       exit(0);
