@@ -65,7 +65,7 @@ int main(int argc, char **argv){
   } else if (strcmp(argv[1],"create") == 0) {
     /*
      * create table and initialize all data to zero
-     * ex: hdb create table1:r:name:c:class 
+     * ex: hdb create table1:r:num:c:num 
      * ==> create a table 
      */
   } else if (strcmp(argv[1],"insert") == 0) {
