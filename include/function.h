@@ -15,4 +15,5 @@ extern void init_database(int fd);
  */
 
 extern bool file_exist(char *path);
+extern bool dir_exist(char *path);
 extern choosen check_yn(char *input);

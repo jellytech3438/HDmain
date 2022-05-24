@@ -46,6 +46,19 @@ bool file_exist(char* path){
   return (stat(strcat(path,".hdb"), &buffer) == 0);
 }
 
+bool dir_exist(char* path){
+  struct stat buffer;
+  if (!stat(path,&buffer)) {
+    if (S_ISDIR(buffer.st_mode)) {
+      return true;
+    }else {
+      return false;
+    }
+  }else{
+    return false;
+  }
+}
+
 choosen check_yn(char* input){
   bool onlyspace = true;
   choosen _choos;

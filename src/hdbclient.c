@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdio.h>
+#include <dirent.h>
 
 #define MAIN
 #include "../include/hdlib.h"
@@ -11,6 +12,11 @@ struct opendb{
 
 int main (int argc, char *argv[]){
   
+  if (opendir(".hdb") < 0) {
+    printf("open error");
+    exit(0);
+  }
+
   // prefix operation here
 
   // print logo here

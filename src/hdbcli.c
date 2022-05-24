@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #define MAIN
 #include "../include/hdlib.h"
@@ -45,44 +46,57 @@ int main(int argc, char **argv){
     /*
      * initialize a new database
      * ex: hdb init mydb
-     * ==> create a file called mydb.hdb
+     * ==> create a dir called mydb which contains .hdb folder as hidden to operate with database
      */
     if (argc > 4) {
       printf(UNKNW_CMD);
       exit(0);
     }
-    if (file_exist(argv[2])) {
+    if (dir_exist(argv[2])) {
       choosen choos;
+      char ip[MAXCHARSIZE];
       printf(CREAT_DUP_FILE);
-      char choose[MAXCHARSIZE];
-      fgets(choose,sizeof(choose),stdin);
-      while((choos = check_yn(choose)) == ELSE){
+      fgets(ip,sizeof(ip),stdin);
+      while((choos = check_yn(ip)) == ELSE){
         printf(CREAT_DUP_FILE);
-        fgets(choose,sizeof(choose),stdin);
+        fgets(ip,sizeof(ip),stdin);
       }
       if (choos == NO || choos == DEFAULT){
         printf("create file failed\n");
         exit(0);
       }
     }
+
+    // still choosing using file or directory
+    // current: dir
+
+    if (mkdir(argv[2], 0777) < 0) {
+      printf("Create Directory error");
+    }else{
+      //init_database();
+    }
+
+    /*
     int fd;
-    if( (fd = open(strcat(argv[2],".hdb"), O_WRONLY | O_CREAT)) < 0){
+    :if( (fd = open(strcat(argv[2],".hdb"), O_WRONLY | O_CREAT)) < 0){
       printf("create file error");
     }else{
       init_database(fd);
     }
     close(fd);
+    */
+  } else if (strcmp(argv[1],"create") == 0) {
+    /*
+     * create table and initialize all data to zero
+     * ex: hdb create table1:column_num: 
+     * ==> create a table 
+     */
+    
   } else if (strcmp(argv[1],"select") == 0) {
     /*
      * select table for further operation
      * ex: hdb select table1
      * ==> find table1 and make pointer point to the offset
-     */
-  } else if (strcmp(argv[1],"create") == 0) {
-    /*
-     * create table and initialize all data to zero
-     * ex: hdb create table1:r:num:c:num 
-     * ==> create a table 
      */
   } else if (strcmp(argv[1],"insert") == 0) {
     /*
@@ -90,7 +104,7 @@ int main(int argc, char **argv){
      * ex: hdb insert table1 name class {index}*/
   } else if (strcmp(argv[1],"delete") == 0) {
     /*
-     * delete inserted data
+     * delete inserted data or table
      * ex: hdb delete name:all
      * ==> delete all file related to name
      * ==> trying to add some mode
