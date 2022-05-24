@@ -1,9 +1,4 @@
 #include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#define MAIN
 #include "../include/hdlib.h"
 
 #if defined (_WIN32)
@@ -53,15 +48,14 @@ int main(int argc, char **argv){
       exit(0);
     }
     if (dir_exist(argv[2])) {
-      choosen choos;
       char ip[MAXCHARSIZE];
       printf(CREAT_DUP_FILE);
       fgets(ip,sizeof(ip),stdin);
-      while((choos = check_yn(ip)) == ELSE){
+      while((choose = check_yn(ip)) == ELSE){
         printf(CREAT_DUP_FILE);
         fgets(ip,sizeof(ip),stdin);
       }
-      if (choos == NO || choos == DEFAULT){
+      if (choose == NO || choose == DEFAULT){
         printf("create file failed\n");
         exit(0);
       }

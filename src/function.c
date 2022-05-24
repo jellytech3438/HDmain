@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "datastruct.c"
+#include "../include/datastruct.h"
 
 /*
  * below are the datastruction function
@@ -16,9 +16,8 @@
  * below are the command line function
  */
 
-void init_database(int fd){
-  printf("test from init database %d\n",fd);
-  write(fd,"test",strlen("test"));
+void init_database(){
+  printf("test from init database\n");
 }
 
 void create_table(){
