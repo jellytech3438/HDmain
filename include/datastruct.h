@@ -9,24 +9,36 @@
 
 #ifndef DS_H
 #define DS_H
-
+#define MAXCHARSIZE 1024
 /*
  * below are datastructures for database
  */
 
-typedef struct room{
-  void* data;
-  struct room *next;
-} room;
-
-typedef struct floor{
-  room *rooms;
-  struct floor *next;
-} floor;
+typedef struct linkedlist{
+  char name[MAXCHARSIZE];
+  enum {
+    INT,
+    STRING,
+    FLOAT,
+  } data_type;
+  union {
+    int int_data[MAXCHARSIZE];
+    char string_data[MAXCHARSIZE][MAXCHARSIZE];
+    float float_data[MAXCHARSIZE];
+  } data;
+  struct linkedlist *next;
+} column;
 
 typedef struct table{
   char *name;
-  floor *floors;
+  enum {
+    NO_RULE,
+    UNCOMPLETETYPE,
+    COMPLETE
+  } column_rule;
+  int column_len;
+  int data_len;
+  column *columns;
 } table;
 
 /*
@@ -39,9 +51,5 @@ typedef enum choosen{
   NO,
   ELSE
 } choosen;
-
-// all extern variables are below
-
-extern choosen choose;
 
 #endif
