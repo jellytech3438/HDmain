@@ -11,9 +11,12 @@ LIBDIR=./lib
 .PHONY: all clean install uninstall
 
 OBJECTS = \
-					$(SRCDIR)/main.c
+					$(SRCDIR)/hdbcli.c
 
-all: hdb
+OBJECTSCLIENT = \
+					$(SRCDIR)/hdbclient.c
+
+all: hdb hdb-client
 
 %(OUTPUT)/%.o: $(SRCDIR)/%.c
 		@mkdir -p $(OUTDIR)	
@@ -22,11 +25,16 @@ all: hdb
 hdb: $(OBJECTS)
 		$(CC) -o $@ $^
 
+hdb-client: $(OBJECTSCLIENT)
+		$(CC) -o $@ $^
+
 clean: 
-		rm -f main.o
+		rm -f hdbcli.o hdbclient.o
 
 install: all
 		install -m755 hdb $(BINDIR)/hdb
+		install -m755 hdb-client $(BINDIR)/hdb-client
 
 uninstall: all
-		rm -rf $(BINDIR)/hdb/
+		rm $(BINDIR)/hdb
+		rm $(BINDIR)/hdb-client
