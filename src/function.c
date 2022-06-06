@@ -15,6 +15,39 @@
  * below are others functions
  */
 
+void read_from_file(table* cur_table, FILE* opentable){
+  if (!fread(cur_table,sizeof(table),1,opentable)) {
+    printf("open table error\n");
+    exit(0);
+  }
+
+  size_t length;
+
+  fread(&length, sizeof(length), 1, opentable);
+  cur_table->name = (char*)malloc(sizeof(char) * length);
+  cur_table->columns = (column*)malloc(sizeof(column));
+
+  if (!fread(cur_table->name, 1, length, opentable)) {
+    printf("open table error\n");
+    exit(0);
+  }
+
+  column *temp = (column*)malloc(sizeof(column));
+  column *last = cur_table->columns;
+
+  int i = 0;
+  while(fread(temp,sizeof(column),1,opentable)){
+    if (i != 0) {
+      last->next = (column*)malloc(sizeof(column));
+      last = last->next;
+    }
+    strcpy(last->name, temp->name);
+    last->data_type = temp->data_type;
+    last->data = temp->data;
+    i++;
+  }
+}
+
 void save_data(table* newtable){
  FILE* table = fopen(newtable->name, "w");
  size_t length;
@@ -34,6 +67,46 @@ void save_data(table* newtable){
    }
    col = col->next;
  }
+}
+
+void split_column_type(char* args, char* column, char* type){
+  char* split;
+  if ((split = strchr(args, ':')) == NULL) {
+    printf("unacceptable no type column\n");
+    exit(0);
+  }else{
+    int j = 0;
+
+    for (; args[j] != *split; j++) {
+      column[j] = args[j];
+    }
+
+    j++;
+
+    for (int k = 0;args[j] != 0; j++,k++) {
+      type[k] = args[j];
+    }
+  }
+}
+
+void split_column_value(char* args, char* column, char* value){
+  char* split;
+  if ((split = strchr(args, '=')) == NULL) {
+    printf("unacceptable no type column\n");
+    exit(0);
+  }else{
+    int j = 0;
+
+    for (; args[j] != *split; j++) {
+      column[j] = args[j];
+    }
+
+    j++;
+
+    for (int k = 0;args[j] != 0; j++,k++) {
+      value[k] = args[j];
+    }
+  }
 }
 
 void check_hidden_folder(){
@@ -93,12 +166,70 @@ choosen check_yn(char* input){
  * below are the datastruction function
  */
 
+column* new_column(char* input, char type[]){
+  column *cur_column = (column*)malloc(sizeof(column));
+
+  split_column_type(input, cur_column->name, type);
+
+  return cur_column;
+}
+
 void add_column(table* t, column* c){
-  column* temp = t->columns;
-  while (temp != NULL) {
-    temp = temp->next;
+  if (t->column_len == 0) {
+    t->columns = c;
+  }else{
+    column **temp = &t->columns;
+    while(*temp != NULL)
+      temp = &(*temp)->next;
+    *temp = c;
   }
-  temp = c;
+  t->column_len++;
+}
+
+void delet_column(table* t, char* c_name){
+  if (t->column_len == 0) {
+    return;
+  }else{
+    column **pre = &t->columns;
+    column **cur = &t->columns;
+    int i = 0;
+    while(*cur != NULL){
+      if (strcmp((*cur)->name, c_name) == 0) {
+        if (i == t->column_len-1) {
+          (*pre)->next = NULL;
+        }else{
+          (*pre)->next = (*cur)->next;
+        }
+      }
+      if (i != 0) {
+        pre = &(*pre)->next;
+      }
+      cur = &(*cur)->next;
+      i++;
+    }
+    t->column_len--;
+    return;
+  }
+}
+
+column** find_column_by_name(table* t, char* c_name){
+  if (t->column_len == 0) {
+    return 0;
+  }else{
+    column **pre = &t->columns;
+    column **cur = &t->columns;
+    int i = 0;
+    while(*cur != NULL){
+      if (strcmp((*cur)->name, c_name) == 0) {
+        return cur;
+      }
+      if (i != 0) {
+        pre = &(*pre)->next;
+      }
+      cur = &(*cur)->next;
+      i++;
+    }
+  }
 }
 
 /*
@@ -154,6 +285,205 @@ void insert_data(){
   printf("test from insert data\n");
 }
 
-void delete_data(){
-  printf("test from delete data\n");
+void delete_data(table* cur_table, int index){
+  column **temp = &cur_table->columns;
+  while(*temp != NULL){
+    if ((*temp)->data_type == INT) {
+      (*temp)->data.int_data[index] = 0;
+    }else if ((*temp)->data_type == STRING) {
+      (*temp)->data.int_data[index] = '\0';
+    }else if ((*temp)->data_type == FLOAT) {
+      (*temp)->data.int_data[index] = 0.;
+    }
+    temp = &(*temp)->next;
+  }
+}
+
+void plot_all_data(table* cur_table){
+  printf("%s\n", cur_table->name);
+  column **temp = &cur_table->columns;
+  while(*temp != NULL){
+    printf("\t|-%s\n", (*temp)->name);
+    for (int i = 0; i < cur_table->data_len; i++) {
+      if ((*temp)->data_type == INT) {
+        printf("\t|\t|-%d\n", (*temp)->data.int_data[i]);
+      }else if ((*temp)->data_type == STRING) {
+        printf("\t|\t|-%s\n", (*temp)->data.string_data[i]);
+      }else if ((*temp)->data_type == FLOAT) {
+        printf("\t|\t|-%f\n", (*temp)->data.float_data[i]);
+      }
+    }
+    temp = &(*temp)->next;
+  }
+}
+
+void where_tag(table* t, bool* get_index,logicoperation lo, bool with_not, char* input) {
+  // dealing with spliting input
+  column **target_col;
+  char* split;
+  char column[MAXCHARSIZE] = {0};
+  char value[MAXCHARSIZE] = {0};
+  if ((split = strchr(input, '=')) == NULL) {
+    printf("unacceptable no type column\n");
+    exit(0);
+  }else{
+    int j = 0;
+
+    for (; input[j] != *split; j++)
+      column[j] = input[j];
+
+    j++;// jump off split
+
+    for (int k = 0;input[j] != 0; j++,k++)
+      value[k] = input[j];
+  }
+
+  target_col = find_column_by_name(t,column);
+
+  // dealing with index list
+  if (lo == AND) {
+    for (int j = 0; j < t->data_len; j++) {
+      // true since AND
+      if (get_index[j] == true){
+        if ((*target_col)->data_type == INT) {
+          if (with_not == false) {
+            if ((*target_col)->data.int_data[j] == atoi(value)) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }else{
+            if ((*target_col)->data.int_data[j] != atoi(value)) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }
+        }else if ((*target_col)->data_type == STRING) {
+          if (with_not == false) {
+            if (strcmp((*target_col)->data.string_data[j], value) == 0) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }else{
+            if (strcmp((*target_col)->data.string_data[j], value) != 0) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }
+        }else if ((*target_col)->data_type == FLOAT) {
+          if (with_not == false) {
+            if ((*target_col)->data.float_data[j] == strtof(value,0)) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }else{
+            if ((*target_col)->data.float_data[j] != strtof(value,0)) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }
+        }
+      }
+    }
+  }else if (lo == OR) {
+    for (int j = 0; j < t->data_len; j++) {
+      // false since OR
+      if (get_index[j] == false){
+        if ((*target_col)->data_type == INT) {
+          if (with_not == false) {
+            if ((*target_col)->data.int_data[j] == atoi(value)) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }else{
+            if ((*target_col)->data.int_data[j] != atoi(value)) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }
+        }else if ((*target_col)->data_type == STRING) {
+          if (with_not == false) {
+            if (strcmp((*target_col)->data.string_data[j], value) == 0) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }else{
+            if (strcmp((*target_col)->data.string_data[j], value) != 0) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }
+        }else if ((*target_col)->data_type == FLOAT) {
+          if (with_not == false) {
+            if ((*target_col)->data.float_data[j] == strtof(value,0)) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }else{
+            if ((*target_col)->data.float_data[j] != strtof(value,0)) {
+              get_index[j] = true;
+            }else{
+              get_index[j] = false;
+            }
+          }
+        }
+      }
+    }
+  }else if (lo == NONE){
+    for (int j = 0; j < t->data_len; j++) {
+      if ((*target_col)->data_type == INT) {
+        if (with_not == false) {
+          if ((*target_col)->data.int_data[j] == atoi(value)) {
+            get_index[j] = true;
+          }else{
+            get_index[j] = false;
+          }
+        }else{
+          if ((*target_col)->data.int_data[j] != atoi(value)) {
+            get_index[j] = true;
+          }else{
+            get_index[j] = false;
+          }
+        }
+      }else if ((*target_col)->data_type == STRING) {
+        if (with_not == false) {
+          if (strcmp((*target_col)->data.string_data[j], value) == 0) {
+            get_index[j] = true;
+          }else{
+            get_index[j] = false;
+          }
+        }else{
+          if (strcmp((*target_col)->data.string_data[j], value) != 0) {
+            get_index[j] = true;
+          }else{
+            get_index[j] = false;
+          }
+        }
+      }else if ((*target_col)->data_type == FLOAT) {
+        if (with_not == false) {
+          if ((*target_col)->data.float_data[j] == strtof(value,0)) {
+            get_index[j] = true;
+          }else{
+            get_index[j] = false;
+          }
+        }else{
+          if ((*target_col)->data.float_data[j] != strtof(value,0)) {
+            get_index[j] = true;
+          }else{
+            get_index[j] = false;
+          }
+        }
+      }
+    }
+  }
 }

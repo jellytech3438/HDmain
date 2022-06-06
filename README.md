@@ -25,15 +25,16 @@ will create a folder called mydb and you can cd into it to continue.
 
 there are some commons to use:
 * create
-* select
 * insert
+* update
 * delete
 * search
+* rename
 
 ### create
 
 ```
-$ hdb create table1{column1:int,column2:string}
+$ hdb create table table_name -c column1:int column2:string
 ```
 
 int this common, we create a table that store two columns of data:
@@ -42,13 +43,14 @@ the first store int as data type, the second store string as data type
 you can decide what your column or table named, ex:
 
 ```
-$ hdb create 2022_A_building{name:string,age:int}
+$ hdb create 2022_A_building -c {0..9}":int" "1"{0..9}":string"
 ```
 
-### select
+### update
 ### insert
 ### delete
 ### search
+### rename
 
 ## TODO
 

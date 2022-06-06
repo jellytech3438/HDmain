@@ -53,7 +53,7 @@ int main(int argc, char **argv){
      * ex: hdb init mydb
      * ==> create a dir called mydb which contains .hdb folder as hidden to operate with database
      */
-    if (argc > 4) {
+    if (argc != 3) {
       printf(UNKNW_CMD);
       exit(0);
     }
@@ -79,10 +79,7 @@ int main(int argc, char **argv){
       }
     }
 
-    // still choosing using file or directory
-    // current: dir
-
-    if (mkdir(checkdir, 0777) < 0) {
+    if (mkdir(checkdir, 0755) < 0) {
       printf("Create Directory error");
     }else{
       init_database(checkdir);
@@ -97,6 +94,11 @@ int main(int argc, char **argv){
 
     if (opendir(".hdb") < 0) {
       printf("error database");
+      exit(0);
+    }
+
+    if (argc < 5) {
+      printf(UNKNW_CMD);
       exit(0);
     }
 
@@ -115,25 +117,11 @@ int main(int argc, char **argv){
         while (i < argc) {
           char* split;
           if ((split = strchr(argv[i], ':')) == NULL) {
-            newtable->column_rule = NO_RULE;
+            printf("unacceptable no type column\n");
+            exit(0);
           }else{
-            newtable->column_rule = COMPLETE;
-
-            column *cur_column = (column*)malloc(sizeof(column));
-
             char type[MAXCHARSIZE] = {0};
-
-            int j = 0;
-
-            for (; argv[i][j] != *split; j++) {
-              cur_column->name[j] = argv[i][j];
-            }
-
-            j++;
-
-            for (int k = 0;argv[i][j] != 0; j++,k++) {
-              type[k] = argv[i][j];
-            }
+            column* cur_column = new_column(argv[i],type);
 
 #ifdef DEBUG
             printf("%s %s\n",cur_column->name,type);
@@ -150,16 +138,7 @@ int main(int argc, char **argv){
               exit(0);
             }
 
-            if (_t == i) {
-              newtable->columns = cur_column;
-            }else{
-              column **temp = &newtable->columns;
-              while(*temp != NULL)
-                temp = &(*temp)->next;
-              *temp = cur_column;
-            }
-
-            newtable->column_len++;
+            add_column(newtable,cur_column);
 
             memset(columname,0,sizeof(columname));
           }
@@ -178,6 +157,14 @@ int main(int argc, char **argv){
      */
      check_hidden_folder();
 
+     /*
+      * prepare to remove "into" tag so it may be 5
+      */
+     if (argc < 6) {
+       printf(UNKNW_CMD);
+       exit(0);
+     }
+
      FILE *opentable;
      table *cur_table = (table*)malloc(sizeof(table));
 
@@ -189,35 +176,8 @@ int main(int argc, char **argv){
            printf("open table error\n");
            exit(0);
          }else{
-
-           if (!fread(cur_table,sizeof(table),1,opentable)) {
-             printf("open table error\n");
-             exit(0);
-           }
-
-           size_t length;
-
-           fread(&length, sizeof(length), 1, opentable);
-           cur_table->name = (char*)malloc(sizeof(char) * length);
-           cur_table->columns = (column*)malloc(sizeof(column));
-
-           if (!fread(cur_table->name, 1, length, opentable)) {
-             printf("open table error\n");
-             exit(0);
-           }
-
-           column *temp = (column*)malloc(sizeof(column));
-           column *last = cur_table->columns;
-
-           while(fread(temp,sizeof(column),1,opentable)){
-              strcpy(last->name, temp->name);
-              last->next = (column*)malloc(sizeof(column));
-              last = last->next;
-           }
-
+           read_from_file(cur_table,opentable);
          }
-         printf("%s\n%s\n", cur_table->columns->name, cur_table->columns->next->name);
-         exit(0);
        }else if (strcmp(argv[i],"values") == 0) {
          if (cur_table->column_len != argc-i-1) {
            printf("error input (wrong len)\n");
@@ -234,45 +194,293 @@ int main(int argc, char **argv){
                temp_col->data.float_data[cur_table->data_len] = strtof(argv[i],0);
              }
              temp_col = temp_col->next;
+             i++;
            }
            cur_table->data_len++;
          }
-         printf("%d\n", cur_table->columns->data.int_data[0]);
        }
      }
 
      save_data(cur_table);
+     plot_all_data(cur_table);
 
    } else if (strcmp(argv[1],"alter") == 0) {
     /*
      * delete inserted data or table
-     * ex: hdb alter table_name add column
+     * ex: hdb alter table_name add column:data_type
      * ex: hdb alter table_name drop column
      * ex: hdb alter table_name modify column data_type
      */
      check_hidden_folder();
+
+     if (argc < 5) {
+       printf(UNKNW_CMD);
+       exit(0);
+     }
+
+     FILE *opentable;
+     table *cur_table = (table*)malloc(sizeof(table));
+
+     opentable = fopen(argv[2], "r");
+     if (opentable == NULL) {
+       printf("open table error\n");
+       exit(0);
+     }else{
+       read_from_file(cur_table,opentable);
+     }
+
+     if (strcmp(argv[3],"add") == 0) {
+       char type[MAXCHARSIZE] = {0};
+       column* newcol = new_column(argv[4],type);
+       if (strcmp(type, "int") == 0) {
+         newcol->data_type = INT;
+       }else if (strcmp(type, "string") == 0) {
+         newcol->data_type = STRING;
+       }else if (strcmp(type, "float") == 0) {
+         newcol->data_type = FLOAT;
+       }else{
+         printf("unknown type\n");
+         exit(0);
+       }
+       add_column(cur_table,newcol);
+     }else if (strcmp(argv[3],"drop") == 0) {
+       delet_column(cur_table,argv[4]);
+     }else if (strcmp(argv[3],"modify") == 0) {
+       if (argc != 6) {
+         printf("INPUT error\n");
+         exit(0);
+       }
+       column** target = find_column_by_name(cur_table, argv[4]);
+       if (strcmp(argv[5], "int") == 0) {
+         (*target)->data_type = INT;
+       }else if (strcmp(argv[5], "string") == 0) {
+         (*target)->data_type = STRING;
+       }else if (strcmp(argv[5], "float") == 0) {
+         (*target)->data_type = FLOAT;
+       }else{
+         printf("unknown type\n");
+         exit(0);
+       }
+
+       // change all exist data type
+
+     }
+
+     save_data(cur_table);
+
    } else if (strcmp(argv[1],"update") == 0) {
     /*
      * update data in table
      * ex: hdb update table_name set column_name=new_data where condition
      */
      check_hidden_folder();
+     if (argc < 5) {
+       printf(UNKNW_CMD);
+       exit(0);
+     }
+     FILE *opentable;
+     table *cur_table = (table*)malloc(sizeof(table));
+
+     opentable = fopen(argv[2], "r");
+     if (opentable == NULL) {
+       printf("open table error\n");
+       exit(0);
+     }else{
+       read_from_file(cur_table,opentable);
+     }
+
+     if (strcmp(argv[3],"set") == 0) {
+       char* split;
+       if ((split = strchr(argv[4], '=')) == NULL) {
+         printf("new value must be given using update\n");
+         exit(0);
+       }else{
+         char colname[MAXCHARSIZE] = {0};
+         char newdata[MAXCHARSIZE] = {0};
+         int j = 0;
+         for (; argv[4][j] != *split; j++) {
+           colname[j] = argv[4][j];
+         }
+         j++;// jump off split
+         for (int k = 0; j < strlen(argv[4]); j++,k++) {
+           newdata[k] = argv[4][j];
+         }
+
+         bool get_index[cur_table->data_len];
+         memset(get_index, false, cur_table->data_len * sizeof(bool));
+
+         // dealing with index in where tag part
+         if (strcmp(argv[5],"where") == 0) {
+           int cur_arg = 6;
+           while (cur_arg < argc) {
+             logicoperation lo = NONE;
+             bool with_not = false;
+             if (strcmp(argv[cur_arg],"AND") == 0) {
+               cur_arg++;
+               lo = AND;
+             }else if (strcmp(argv[cur_arg],"OR") == 0) {
+               cur_arg++;
+               lo = OR;
+             }
+             if (strcmp(argv[cur_arg],"NOT") == 0) {
+               cur_arg++;
+               with_not = true;
+             }
+             where_tag(cur_table,get_index,lo, with_not, argv[cur_arg]);
+             for (int get_i = 0; get_i < cur_table->data_len; get_i++) {
+               if (get_index[get_i] == true) {
+                 printf("%d ", get_i);
+               }
+             }
+             cur_arg++;
+           }
+         }
+
+         column** cur_column = find_column_by_name(cur_table,colname);
+         for (int index = 0; index < cur_table->data_len; index++) {
+           if (get_index[index] == true) {
+             printf("%d\n", index);
+             if ((*cur_column)->data_type == INT) {
+               (*cur_column)->data.int_data[index] = atoi(newdata);
+             }else if ((*cur_column)->data_type == STRING) {
+               strcpy((*cur_column)->data.string_data[index], newdata);
+             }else if ((*cur_column)->data_type == FLOAT) {
+               (*cur_column)->data.float_data[index] = strtof(newdata,0);
+             }
+           }
+         }
+       }
+       save_data(cur_table);
+     }
+
    } else if (strcmp(argv[1],"delete") == 0) {
     /*
      * delete inserted data or table
-     * ex: hdb delete from table_name where condition
+     * ex: hdb delete table_name where column_name=data
+     * ex: hdb delete table_name where not column_name=data
+     * ex: hdb delete table_name where column1_name=data and column2_name=data
+     * ex: hdb delete table_name where column1_name=data or column2_name=data
      */
+     // check_hidden_folder();
+     if (argc < 5) {
+       printf(UNKNW_CMD);
+       exit(0);
+     }
+     FILE *opentable;
+     table *cur_table = (table*)malloc(sizeof(table));
+
+     opentable = fopen(argv[2], "r");
+     if (opentable == NULL) {
+       printf("open table error\n");
+       exit(0);
+     }else{
+       read_from_file(cur_table,opentable);
+     }
+
+     bool get_index[cur_table->data_len];
+     memset(get_index, false, cur_table->data_len * sizeof(bool));
+
+     // dealing with index in where tag part
+     if (strcmp(argv[5],"where") == 0) {
+       int cur_arg = 6;
+       while (cur_arg < argc) {
+         logicoperation lo = NONE;
+         bool with_not = false;
+         if (strcmp(argv[cur_arg],"AND") == 0) {
+           cur_arg++;
+           lo = AND;
+         }else if (strcmp(argv[cur_arg],"OR") == 0) {
+           cur_arg++;
+           lo = OR;
+         }
+         if (strcmp(argv[cur_arg],"NOT") == 0) {
+           cur_arg++;
+           with_not = true;
+         }
+         where_tag(cur_table,get_index,lo, with_not, argv[cur_arg]);
+         cur_arg++;
+       }
+
+       for (int index = 0; index < cur_table->data_len; index++) {
+         if (get_index[index] == true) {
+           printf("%d\n", index);
+           delete_data(cur_table,index);
+         }
+       }
+     }
+
   } else if (strcmp(argv[1],"search") == 0) {
     /*
      * search for specific data
      * ex: hdb search table_name where condition
      */
+     check_hidden_folder();
+     if (argc < 3) {
+       printf(UNKNW_CMD);
+       exit(0);
+     }
+     FILE *opentable;
+     table *cur_table = (table*)malloc(sizeof(table));
+
+     opentable = fopen(argv[2], "r");
+     if (opentable == NULL) {
+       printf("open table error\n");
+       exit(0);
+     }else{
+       read_from_file(cur_table,opentable);
+     }
+
+     if (strcmp(argv[3], "where") == 0) {
+       char column_name[MAXCHARSIZE] = {0};
+       char value[MAXCHARSIZE] = {0};
+       split_column_value(argv[4],column_name,value);
+
+       column** target_col = find_column_by_name(cur_table, column_name);
+
+       for (int index = 0; index < cur_table->data_len; index++) {
+         if ((*target_col)->data_type == INT) {
+           if ((*target_col)->data.int_data[index] == atoi(value)) {
+             printf("find value %d\n", atoi(value));
+           }
+         }else if ((*target_col)->data_type == STRING) {
+           if (strcmp((*target_col)->data.string_data[index], value) == 0) {
+             printf("find value %s\n", value);
+           }
+         }else if ((*target_col)->data_type == FLOAT) {
+           if ((*target_col)->data.float_data[index] == strtof(value,0)) {
+             printf("find value %f\n", strtof(value,0));
+           }
+         }
+       }
+     }
+
   } else if (strcmp(argv[1],"rename") == 0) {
     /*
      * rename a table or column
      * ex: hdb rename -t origin_name new_name
-     * ex: hdb rename -c origin_name new_name
+     * ex: hdb rename -t table_name -c origin_name new_name
      * ==> -c means columns -t means table
+     */
+     check_hidden_folder();
+     if (argc != 5) {
+       printf(UNKNW_CMD);
+       exit(0);
+     }
+     FILE *opentable;
+     table *cur_table = (table*)malloc(sizeof(table));
+
+     opentable = fopen(argv[2], "r");
+     if (opentable == NULL) {
+       printf("open table error\n");
+       exit(0);
+     }else{
+       read_from_file(cur_table,opentable);
+     }
+
+  } else if (strcmp(argv[1],"plot") == 0) {
+    /*
+     * rename a table or column
+     * ex: hdb plot table_name x row1 row2 ... y column1
      */
      check_hidden_folder();
 

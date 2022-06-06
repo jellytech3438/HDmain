@@ -31,11 +31,6 @@ typedef struct linkedlist{
 
 typedef struct table{
   char *name;
-  enum {
-    NO_RULE,
-    UNCOMPLETETYPE,
-    COMPLETE
-  } column_rule;
   int column_len;
   int data_len;
   column *columns;
@@ -51,5 +46,17 @@ typedef enum choosen{
   NO,
   ELSE
 } choosen;
+
+typedef enum logicoperation{
+  NONE,
+  AND,
+  OR,
+} logicoperation;
+
+typedef enum filtervalue{
+  LT,
+  EQ,
+  BT
+} filtervalue;
 
 #endif
