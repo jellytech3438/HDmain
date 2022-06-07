@@ -12,13 +12,13 @@
 ## Algorithm
 - Command ***Show phone number*** using bubble sorting to sort the information and print them out.
 ## Main Functions
-**1. Search**
+1. Search
 ---
-**2. Delete**
+2. Delete
 ---
-**3. Modify**
+3. Modify
 ---
-**4. Traverse**
+4. Traverse
 ---
-**5. Sort**
+5. Sort
 ---
