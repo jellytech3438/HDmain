@@ -6,11 +6,11 @@
 ### You need to follow these three steps : 
 #### The Thing Need To Do At Beginning
 - You must have a computer with C language environment.
-- You can prepare your own input.txt or input the information one by one.
+- You can choose to prepare your own input.txt or not.
 #### The Thing Need To Do While Using
 -
 #### The Thing Need To Do At The End
-- You can get output.txt after every time you executing the code.
+- You can get your own output.txt after every time you executing the code.
 ## Algorithm
 - ***Show phone number*** command using bubble sorting to sort the information.
 ## Main Functions
