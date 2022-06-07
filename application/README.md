@@ -14,12 +14,12 @@
 ## Main Functions
 ### Whole code's flowchart be like :
 #### 1. Search
----
-2. Delete
----
-3. Modify
----
-4. Traverse
----
-5. Sort
----
+
+#### 2. Delete
+
+#### 3. Modify
+
+#### 4. Traverse
+
+#### 5. Sort
+
