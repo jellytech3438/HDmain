@@ -10,6 +10,6 @@
 #### The Thing Need To Do At The End
 - You can get your own output.txt after executing the code.
 ## Algorithm
-- ***Show phone number*** command using bubble sorting to sort the information.
+- Command ***Show phone number*** using bubble sorting to sort the information.
 ## Main Functions
 ## Problem When Using The Code
