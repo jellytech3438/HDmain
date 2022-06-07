@@ -10,7 +10,7 @@
 #### The Thing Need To Do At The End
 - You can get your own output.txt after executing the code.
 ## Algorithm
-- Command ***Show phone number*** using bubble sorting to sort the information and print them out.
+- Command `Show phone number` using bubble sorting to sort the information and print them out.
 ## Main Functions
 ### Whole code's flowchart be like :
 #### 1. Search
