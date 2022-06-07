@@ -12,6 +12,6 @@
 #### The Thing Need To Do At The End
 - You can get output after every executing.
 ## Algorithm
-- **Show phone number** function using bubble sort.
+- ***Show phone number*** function using bubble sort.
 ## Main Functions
 ## Problem When Using The Code
