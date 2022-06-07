@@ -75,7 +75,7 @@ int main(){
 
         int i = 0;
         printf("First time to use this program?\n");
-        printf("[1] Yes. [2] No.  : ");
+        printf("[1] Yes. [otherwise] No.  : ");
         scanf("%d", &i);
         if (i == 1){//first time
             /****************************************************/                                                
@@ -106,7 +106,8 @@ int main(){
             building = create_building(floor_num, room_num);
             struct ll *temp_floor=building;
 
-            //regain the structure which have built last time
+            /*regain the structure which have built last time*/
+            /*************************************************/
             while(temp_floor != NULL){
                 struct room *temp_room=temp_floor->HEAD;
                 while(temp_room != NULL){
@@ -219,7 +220,7 @@ int main(){
         }else if(command == 7){
             //update the roomer info            
             struct ll *temp_floor=building;
-            while(temp_floor != NULL){      //store the sturcture for the next time to use
+            while(temp_floor != NULL){     //store the sturcture for the next time to use
                 struct room *temp_room=temp_floor->HEAD;
                 while(temp_room != NULL){
                     fprintf(fp2, "%d\n", temp_room->room_type);
@@ -373,6 +374,7 @@ struct room* search_name(char *target, struct ll *cur_floor){
 }
 
 void print_type(struct room *target){
+    printf("====================================================\n");
     if(target->room_type == FOR_ACCOMMODATE ){
         printf("%d is for accommodation.\n",(target->room_num+target->floor*100));
     }else if(target->room_type == FOR_OFFICE){
@@ -514,15 +516,14 @@ void change_phone(struct room *target){
         printf("The new number is:");
         scanf("%lld", &new_number);
         temp = new_number;
-        if((temp!=0&&temp<100000000)||temp>999999999){
-            printf("Be sure to enter right phone number!\n");
-        }else{
-            if(new_number<=999999999&&new_number>=100000000)
-            {
-                new_number %= 100000000;
-            }
-            target->roomer_phone=new_number;
+        
+        if(temp<999999999&&temp>900000000){
+            new_number %= 100000000;
+            target->roomer_phone = new_number;
             break;
+        }
+        else{
+            printf("Be sure to enter right phone number!\n");
         }
     }
     return;
@@ -531,9 +532,16 @@ void change_phone(struct room *target){
 void change_rent(struct room *target){
     //modify the rent of target room
     int new_rent;
-    printf("Rent:");
-    scanf("%d", &new_rent);
-    target->rent=new_rent;
+    while(1){  
+        printf("Rent:");
+        scanf("%d", &new_rent);
+        if(new_rent>=0)
+        {   
+            target->rent=new_rent;
+            break;
+        }
+        printf("Please input right number!\n");
+    }
     return;
 }
 
@@ -576,22 +584,19 @@ void punish(struct room *target){
 void traverse_phone(struct ll *cur_floor){
     //phone number directory
     struct ll *temp_floor=cur_floor;
-
+    printf("================================================\n");
     while(temp_floor != NULL){
         struct room *temp_room=temp_floor->HEAD;
 
         while(temp_room != NULL){
             int room_num=(100*temp_room->floor)+temp_room->room_num;
-            if(temp_room->room_type == EMPTY_ROOM&&strcmp(temp_room->roomer_name,"No_roomer")==0){
-                printf("%d is empty.\n", room_num);
-            }else{
-                printf("%d : #09-%lld\n", room_num, temp_room->roomer_phone);
-            }
+            printf("%d : #09-%lld\n", room_num, temp_room->roomer_phone);
             temp_room=temp_room->next;
         }
         printf("----------FLOOR:%d----------\n", temp_floor->floor);
         temp_floor=temp_floor->next;
     }
+    printf("================================================\n");
 }
 
 void sort(struct ll *cur_floor,int floor_num,int room_num){
