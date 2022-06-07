@@ -12,7 +12,7 @@
 ## Algorithm
 - Command ***Show phone number*** using bubble sorting to sort the information and print them out.
 ## Main Functions
-### Whole code's flowchart be like:
+### Whole code's flowchart be like :
 1. Search
 ---
 2. Delete
