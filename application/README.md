@@ -5,7 +5,7 @@
 ## How To Use
 - You need to follow these three steps : 
 #### The Thing Need To Do At Beginning
-- You must have a computer with C language envieonment.
+- You must have a computer with C language environment.
 - You can prepare your own input or get one after the first coding.
 #### The Thing Need To Do While Using
 -
