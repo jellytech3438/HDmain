@@ -251,11 +251,24 @@ int main(int argc, char **argv){
          exit(0);
        }
        column** target = find_column_by_name(cur_table, argv[4]);
+       int origin_data_type = (*target)->data_type;
        if (strcmp(argv[5], "int") == 0) {
+         if ((*target)->data_type == INT){
+           printf("selected column type is what you want\n");
+           exit(0);
+         }
          (*target)->data_type = INT;
        }else if (strcmp(argv[5], "string") == 0) {
+         if ((*target)->data_type == STRING){
+           printf("selected column type is what you want\n");
+           exit(0);
+         }
          (*target)->data_type = STRING;
        }else if (strcmp(argv[5], "float") == 0) {
+         if ((*target)->data_type == FLOAT){
+           printf("selected column type is what you want\n");
+           exit(0);
+         }
          (*target)->data_type = FLOAT;
        }else{
          printf("unknown type\n");
@@ -264,12 +277,63 @@ int main(int argc, char **argv){
 
        // change all exist data type
 
+       if (origin_data_type == INT) {
+         int origin_data[MAXCHARSIZE] = {0};
+         for (int data_index = 0; data_index < cur_table->data_len; data_index++) {
+           origin_data[data_index] = (*target)->data.int_data[data_index];
+         }
+         if ((*target)->data_type == STRING) {
+           for (int data_index = 0; data_index < cur_table->data_len; data_index++) {
+              // char temp = origin_data[data_index]+'0';
+              char str[MAXCHARSIZE];
+              sprintf(str, "%d", origin_data[data_index]);
+              strcpy((*target)->data.string_data[data_index], str);
+           }
+         }else if ((*target)->data_type == FLOAT) {
+           for (int data_index = 0; data_index < cur_table->data_len; data_index++) {
+             (*target)->data.float_data[data_index] = origin_data[data_index];
+           }
+         }
+       }else if (origin_data_type == STRING) {
+         char origin_data[MAXCHARSIZE][MAXCHARSIZE] = {{0}};
+         for (int data_index = 0; data_index < cur_table->data_len; data_index++) {
+           strcpy(origin_data[data_index], (*target)->data.string_data[data_index]);
+         }
+         if ((*target)->data_type == INT) {
+           for (int data_index = 0; data_index < cur_table->data_len; data_index++) {
+             (*target)->data.int_data[data_index] = atoi(origin_data[data_index]);
+           }
+         }else if ((*target)->data_type == FLOAT) {
+           for (int data_index = 0; data_index < cur_table->data_len; data_index++) {
+             (*target)->data.float_data[data_index] = strtof(origin_data[data_index],0);
+           }
+         }
+       }else if (origin_data_type == FLOAT) {
+         float origin_data[MAXCHARSIZE] = {0.};
+         for (int data_index = 0; data_index < cur_table->data_len; data_index++) {
+           origin_data[data_index] = (*target)->data.float_data[data_index];
+         }
+         if ((*target)->data_type == INT) {
+           for (int data_index = 0; data_index < cur_table->data_len; data_index++) {
+             (*target)->data.int_data[data_index] = origin_data[data_index];
+           }
+         }else if ((*target)->data_type == STRING) {
+           for (int data_index = 0; data_index < cur_table->data_len; data_index++) {
+              // char temp = origin_data[data_index]+'0';
+              char str[MAXCHARSIZE];
+              sprintf(str, "%f", origin_data[data_index]);
+              strcpy((*target)->data.string_data[data_index], str);
+           }
+         }
+       }
+
      }
 
      save_data(cur_table);
+     plot_all_data(cur_table);
 
    } else if (strcmp(argv[1],"update") == 0) {
-    /*
+     /*
      * update data in table
      * ex: hdb update table_name set column_name=new_data where condition
      */
@@ -297,14 +361,7 @@ int main(int argc, char **argv){
        }else{
          char colname[MAXCHARSIZE] = {0};
          char newdata[MAXCHARSIZE] = {0};
-         int j = 0;
-         for (; argv[4][j] != *split; j++) {
-           colname[j] = argv[4][j];
-         }
-         j++;// jump off split
-         for (int k = 0; j < strlen(argv[4]); j++,k++) {
-           newdata[k] = argv[4][j];
-         }
+         split_column_value(argv[4],colname,newdata);
 
          bool get_index[cur_table->data_len];
          memset(get_index, false, cur_table->data_len * sizeof(bool));
@@ -327,11 +384,11 @@ int main(int argc, char **argv){
                with_not = true;
              }
              where_tag(cur_table,get_index,lo, with_not, argv[cur_arg]);
-             for (int get_i = 0; get_i < cur_table->data_len; get_i++) {
-               if (get_index[get_i] == true) {
-                 printf("%d ", get_i);
-               }
-             }
+             // for (int get_i = 0; get_i < cur_table->data_len; get_i++) {
+             //   if (get_index[get_i] == true) {
+             //     printf("%d ", get_i);
+             //   }
+             // }
              cur_arg++;
            }
          }
@@ -361,7 +418,7 @@ int main(int argc, char **argv){
      * ex: hdb delete table_name where column1_name=data and column2_name=data
      * ex: hdb delete table_name where column1_name=data or column2_name=data
      */
-     // check_hidden_folder();
+     check_hidden_folder();
      if (argc < 5) {
        printf(UNKNW_CMD);
        exit(0);
@@ -381,8 +438,8 @@ int main(int argc, char **argv){
      memset(get_index, false, cur_table->data_len * sizeof(bool));
 
      // dealing with index in where tag part
-     if (strcmp(argv[5],"where") == 0) {
-       int cur_arg = 6;
+     if (strcmp(argv[3],"where") == 0) {
+       int cur_arg = 4;
        while (cur_arg < argc) {
          logicoperation lo = NONE;
          bool with_not = false;
@@ -403,11 +460,12 @@ int main(int argc, char **argv){
 
        for (int index = 0; index < cur_table->data_len; index++) {
          if (get_index[index] == true) {
-           printf("%d\n", index);
            delete_data(cur_table,index);
          }
        }
      }
+
+     save_data(cur_table);
 
   } else if (strcmp(argv[1],"search") == 0) {
     /*
@@ -430,29 +488,38 @@ int main(int argc, char **argv){
        read_from_file(cur_table,opentable);
      }
 
-     if (strcmp(argv[3], "where") == 0) {
-       char column_name[MAXCHARSIZE] = {0};
-       char value[MAXCHARSIZE] = {0};
-       split_column_value(argv[4],column_name,value);
+     bool get_index[cur_table->data_len];
+     memset(get_index, false, cur_table->data_len * sizeof(bool));
 
-       column** target_col = find_column_by_name(cur_table, column_name);
+     // dealing with index in where tag part
+     if (strcmp(argv[3],"where") == 0) {
+       int cur_arg = 4;
+       while (cur_arg < argc) {
+         logicoperation lo = NONE;
+         bool with_not = false;
+         if (strcmp(argv[cur_arg],"AND") == 0) {
+           cur_arg++;
+           lo = AND;
+         }else if (strcmp(argv[cur_arg],"OR") == 0) {
+           cur_arg++;
+           lo = OR;
+         }
+         if (strcmp(argv[cur_arg],"NOT") == 0) {
+           cur_arg++;
+           with_not = true;
+         }
+         where_tag(cur_table,get_index,lo, with_not, argv[cur_arg]);
+         cur_arg++;
+       }
 
        for (int index = 0; index < cur_table->data_len; index++) {
-         if ((*target_col)->data_type == INT) {
-           if ((*target_col)->data.int_data[index] == atoi(value)) {
-             printf("find value %d\n", atoi(value));
-           }
-         }else if ((*target_col)->data_type == STRING) {
-           if (strcmp((*target_col)->data.string_data[index], value) == 0) {
-             printf("find value %s\n", value);
-           }
-         }else if ((*target_col)->data_type == FLOAT) {
-           if ((*target_col)->data.float_data[index] == strtof(value,0)) {
-             printf("find value %f\n", strtof(value,0));
-           }
+         if (get_index[index] == true) {
+           printf("%d\n", index);
          }
        }
      }
+
+     plot_all_data(cur_table);
 
   } else if (strcmp(argv[1],"rename") == 0) {
     /*
@@ -462,14 +529,14 @@ int main(int argc, char **argv){
      * ==> -c means columns -t means table
      */
      check_hidden_folder();
-     if (argc != 5) {
+     if (argc < 5) {
        printf(UNKNW_CMD);
        exit(0);
      }
      FILE *opentable;
      table *cur_table = (table*)malloc(sizeof(table));
 
-     opentable = fopen(argv[2], "r");
+     opentable = fopen(argv[3], "r");
      if (opentable == NULL) {
        printf("open table error\n");
        exit(0);
@@ -477,10 +544,29 @@ int main(int argc, char **argv){
        read_from_file(cur_table,opentable);
      }
 
+     if (strcmp(argv[4], "-c") == 0 || strcmp(argv[4], "column") == 0) {
+       if (argc < 7) {
+         printf(UNKNW_CMD);
+         exit(0);
+       }
+       column** target_col = find_column_by_name(cur_table, argv[5]);
+       strcpy((*target_col)->name,argv[6]);
+       save_data(cur_table);
+     }else {
+        int result = rename(argv[3], argv[4]);
+        if (result == 0) {
+          printf("The table is renamed successfully.");
+        } else {
+          printf("The table renamed is fail.");
+          exit(0);
+        }
+     }
+
   } else if (strcmp(argv[1],"plot") == 0) {
     /*
      * rename a table or column
-     * ex: hdb plot table_name x row1 row2 ... y column1
+     * ex: hdb plot table_name -x column -y column
+     * ==> y can only be INT or FLOAT type
      */
      check_hidden_folder();
 

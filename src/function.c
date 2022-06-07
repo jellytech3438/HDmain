@@ -179,8 +179,13 @@ void add_column(table* t, column* c){
     t->columns = c;
   }else{
     column **temp = &t->columns;
-    while(*temp != NULL)
+    while(*temp != NULL){
+      if (strcmp((*temp)->name, c->name) == 0) {
+        printf("column name already exist\n");
+        exit(0);
+      }
       temp = &(*temp)->next;
+    }
     *temp = c;
   }
   t->column_len++;
@@ -189,16 +194,22 @@ void add_column(table* t, column* c){
 void delet_column(table* t, char* c_name){
   if (t->column_len == 0) {
     return;
+  }else if (t->column_len == 1){
+    t->columns = NULL;
+    return;
   }else{
     column **pre = &t->columns;
     column **cur = &t->columns;
     int i = 0;
     while(*cur != NULL){
       if (strcmp((*cur)->name, c_name) == 0) {
+        // printf("%d %d\n",i , t->column_len-1);
         if (i == t->column_len-1) {
           (*pre)->next = NULL;
+          return;
         }else{
           (*pre)->next = (*cur)->next;
+          return;
         }
       }
       if (i != 0) {
@@ -277,23 +288,15 @@ void create_table(table* newtable){
   save_data(newtable);
 }
 
-void select_table(){
-  printf("test from select table\n");
-}
-
-void insert_data(){
-  printf("test from insert data\n");
-}
-
 void delete_data(table* cur_table, int index){
   column **temp = &cur_table->columns;
   while(*temp != NULL){
     if ((*temp)->data_type == INT) {
       (*temp)->data.int_data[index] = 0;
     }else if ((*temp)->data_type == STRING) {
-      (*temp)->data.int_data[index] = '\0';
+      strcpy((*temp)->data.string_data[index], "\0");
     }else if ((*temp)->data_type == FLOAT) {
-      (*temp)->data.int_data[index] = 0.;
+      (*temp)->data.float_data[index] = 0.;
     }
     temp = &(*temp)->next;
   }
@@ -327,17 +330,19 @@ void where_tag(table* t, bool* get_index,logicoperation lo, bool with_not, char*
     printf("unacceptable no type column\n");
     exit(0);
   }else{
-    int j = 0;
-
-    for (; input[j] != *split; j++)
-      column[j] = input[j];
-
-    j++;// jump off split
-
-    for (int k = 0;input[j] != 0; j++,k++)
-      value[k] = input[j];
+    split_column_value(input,column,value);
   }
 
+  // index as condition
+  if (strcmp(column,"INDEX") == 0) {
+    int index = atoi(value);
+    if (index > 0 && index < t->data_len) {
+      get_index[index] = true;
+    }
+    return;
+  }
+
+  // column name and value
   target_col = find_column_by_name(t,column);
 
   // dealing with index list
