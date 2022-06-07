@@ -1,4 +1,4 @@
-# Rent_app ( Basic Part )
+# Rent_App ( Basic Part )
 
 ## Description
 - As a landlord, you
