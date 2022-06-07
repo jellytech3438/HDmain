@@ -1,4 +1,4 @@
-# Hello DataBase
+# Basic
 
 ## Description
 - As a landlord, you
