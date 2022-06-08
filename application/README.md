@@ -13,6 +13,7 @@
 - Command `Show phone number` using bubble sorting to sort the information and print them out.
 ## Main Functions
 ### Whole code's flowchart be like :
+![avatar](https://i.imgur.com/b0kyx5F.jpg)
 #### 1. Search
 - If you want to find out someone who lives in the building and all the information about he/she, it's impossible to find out one piece data from tons of datas, so you can use Command `Search` to finish it.
 #### 2. Delete
