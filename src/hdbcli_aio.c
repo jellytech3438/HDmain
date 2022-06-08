@@ -11,8 +11,8 @@
   #define OPERATING_SYSTEM "windows"
 #elif defined (__linux__)
   #define OPERATING_SYSTEM "linux"
-#else
-  #define OPERATING_SYSTEM NULL
+  #include <linux/io_uring.h>
+  #include <sys/syscall.h>
 #endif
 
 #define UNKNW_CMD "unknown command: type \"hdb --help\" for more information"
@@ -23,6 +23,12 @@
 #define DELE_WARN "are you sure you want to delete anyway?[Y/N]"
 
 int main(int argc, char **argv){
+
+  if (syscall(__NR_io_uring_register, 0, IORING_UNREGISTER_BUFFERS, NULL, 0) && errno == ENOSYS) {
+      // No io_uring
+      printf("no io uring");
+      exit(0);
+  }
 
   setlocale(LC_ALL, "");
 
@@ -496,10 +502,15 @@ int main(int argc, char **argv){
          where_tag(cur_table,get_index,lo, with_not, argv[cur_arg]);
          cur_arg++;
        }
+
+       for (int index = 0; index < cur_table->data_len; index++) {
+         if (get_index[index] == true) {
+           printf("%d\n", index);
+         }
+       }
      }
 
-     // plot_all_data(cur_table);
-     plot_some_data(cur_table, get_index);
+     plot_all_data(cur_table);
 
   } else if (strcmp(argv[1],"rename") == 0) {
     /*

@@ -7,9 +7,50 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <wchar.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "../include/datastruct.h"
+
+// print color
+#define RED   "\x1B[31m"
+#define GRN   "\x1B[32m"
+#define YEL   "\x1B[33m"
+#define BLU   "\x1B[34m"
+#define MAG   "\x1B[35m"
+#define CYN   "\x1B[36m"
+#define WHT   "\x1B[37m"
+#define RESET "\x1B[0m"
+
+#define PLOT_PADDING 2
+
+// print box drawing char
+const wchar_t
+    VRT1 = L'\x2551', // ║
+    VRT2 = L'\x2502', // │
+    HRZ1 = L'\x2550', // ═
+    HRZ2 = L'\x2500', // ─
+    TUP  = L'\x2569', // ╩
+    TDWN1 = L'\x2566', // ╦
+    TDWN2 = L'\x252C', // ┬
+    TDWN3 = L'\x2564', // ╤
+    INTR = L'\x256B', // ╫
+    LLCNR1 = L'\x255A', //╚
+    LLCNR2 = L'\x2514', //└
+    LUCNR1 = L'\x2554', // ╔
+    LUCNR2 = L'\x250C', // ┌
+    RLCNR1 = L'\x255D', // ╝
+    RLCNR2 = L'\x2518', // ┘
+    RUCNR1 = L'\x2557', //╗
+    RUCNR2 = L'\x2510', //┐
+    LINTR1 = L'\x2560', // ╠
+    LINTR2 = L'\x251C', // ├
+    LINTR3 = L'\x255E', // ╞
+    LINTR4 = L'\x255F', // ╟
+    RINTR1 = L'\x2563', // ╣
+    RINTR2 = L'\x2524', // ┤
+    RINTR3 = L'\x2561', // ╡
+    RINTR4 = L'\x2562'; // ╢
 
 /*
  * below are others functions
@@ -71,22 +112,29 @@ void save_data(table* newtable){
 
 void split_column_type(char* args, char* column, char* type){
   char* split;
+  char* temp;
   if ((split = strchr(args, ':')) == NULL) {
     printf("unacceptable no type column\n");
     exit(0);
-  }else{
-    int j = 0;
+  }
 
-    for (; args[j] != *split; j++) {
+  int j = 0;
+
+  for (; args[j] != *split; j++) {
+    if (isalnum(args[j]) || args[j] == '_' ) {
       column[j] = args[j];
-    }
-
-    j++;
-
-    for (int k = 0;args[j] != 0; j++,k++) {
-      type[k] = args[j];
+    }else{
+      printf("unacceptable symbol in column name\n");
+      exit(0);
     }
   }
+
+  j++; // jump off the split
+
+  for (int k = 0;args[j] != 0; j++,k++) {
+    type[k] = args[j];
+  }
+
 }
 
 void split_column_value(char* args, char* column, char* value){
@@ -94,18 +142,23 @@ void split_column_value(char* args, char* column, char* value){
   if ((split = strchr(args, '=')) == NULL) {
     printf("unacceptable no type column\n");
     exit(0);
-  }else{
-    int j = 0;
+  }
 
-    for (; args[j] != *split; j++) {
+  int j = 0;
+
+  for (; args[j] != *split; j++) {
+    if (isalnum(args[j]) || args[j] == '_' ) {
       column[j] = args[j];
+    }else{
+      printf("unacceptable symbol in column name\n");
+      exit(0);
     }
+  }
 
-    j++;
+  j++; // jump off the split
 
-    for (int k = 0;args[j] != 0; j++,k++) {
-      value[k] = args[j];
-    }
+  for (int k = 0;args[j] != 0; j++,k++) {
+    value[k] = args[j];
   }
 }
 
@@ -122,7 +175,7 @@ void check_hidden_folder(){
 
 bool file_exist(char* path){
   struct stat buffer;
-  return (stat(strcat(path,".hdb"), &buffer) == 0);
+  return (stat(path, &buffer) == 0);
 }
 
 bool dir_exist(char* path){
@@ -162,17 +215,13 @@ choosen check_yn(char* input){
   return _choos;
 }
 
+bool Xor(bool a, bool b){
+  return (a + b) % 2;
+}
+
 /*
  * below are the datastruction function
  */
-
-column* new_column(char* input, char type[]){
-  column *cur_column = (column*)malloc(sizeof(column));
-
-  split_column_type(input, cur_column->name, type);
-
-  return cur_column;
-}
 
 void add_column(table* t, column* c){
   if (t->column_len == 0) {
@@ -206,9 +255,17 @@ void delet_column(table* t, char* c_name){
         // printf("%d %d\n",i , t->column_len-1);
         if (i == t->column_len-1) {
           (*pre)->next = NULL;
+          t->column_len--;
           return;
+        }else if (pre == cur) {
+          if ((*pre)->next == NULL) {
+            t->columns = NULL;
+          }else{
+            t->columns = (*pre)->next;
+          }
         }else{
           (*pre)->next = (*cur)->next;
+          t->column_len--;
           return;
         }
       }
@@ -302,42 +359,277 @@ void delete_data(table* cur_table, int index){
   }
 }
 
+void plot_table(char* t_name){
+  printf(WHT"%lc"RESET, LUCNR1);
+  for (int _ = 0; _ < strlen(t_name); _++) {
+    printf(WHT"%lc"RESET, HRZ1);
+  }
+  printf(WHT"%lc\n"RESET, RUCNR1);
+
+  printf(WHT"%lc"RESET CYN"%s"RESET WHT"%lc"RESET"\n"RESET,VRT1 ,t_name, VRT1);
+
+  printf(WHT"%lc"RESET, LLCNR1);
+  for (int _ = 0; _ < strlen(t_name); _++) {
+    if (_ == PLOT_PADDING-1) {
+      printf(WHT"%lc"RESET, TDWN1);
+    }else{
+      printf(WHT"%lc"RESET, HRZ1);
+    }
+  }
+  printf(WHT"%lc\n"RESET, RLCNR1);
+}
+
+void plot_column(char* c_name, int t_col_l, int col_l){
+  for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+  printf(WHT"%lc "RESET,VRT1);
+  printf(WHT"%lc"RESET, LUCNR2);
+  int box_width = strlen(c_name) < PLOT_PADDING ? PLOT_PADDING : strlen(c_name);
+  for (int _ = 0; _ < box_width; _++) {
+    printf(WHT"%lc"RESET, HRZ2);
+  }
+  printf(WHT"%lc\n"RESET, RUCNR2);
+
+  if (t_col_l == col_l-1) {
+    for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+    printf(WHT"%lc%lc%lc"RESET,LLCNR1,HRZ1,RINTR3);
+    printf(CYN"%s"RESET ,c_name);
+    if (box_width != strlen(c_name)) {
+      for (int _ = 0; _ < box_width - strlen(c_name); _++) printf(WHT" "RESET);
+    }
+    printf(WHT"%lc\n"RESET,VRT2 );
+
+    for (int _ = 0; _ < 2 + PLOT_PADDING; _++) printf(WHT" "RESET);
+    printf(WHT"%lc"RESET, LLCNR2);
+    for (int _ = 0; _ < box_width; _++) {
+      if (_ == PLOT_PADDING-1) {
+        printf(WHT"%lc"RESET, TDWN2);
+      }else{
+        printf(WHT"%lc"RESET, HRZ2);
+      }
+    }
+    printf(WHT"%lc\n"RESET, RLCNR2);
+  }else{
+    for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+    printf(WHT"%lc%lc%lc"RESET,LINTR1,HRZ1,RINTR3);
+    printf(CYN"%s"RESET ,c_name);
+    if (box_width != strlen(c_name)) {
+      for (int _ = 0; _ < box_width - strlen(c_name); _++) printf(WHT" "RESET);
+    }
+    printf(WHT"%lc\n"RESET,VRT2 );
+
+    for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+    printf(WHT"%lc "RESET,VRT1);
+    printf(WHT"%lc"RESET, LLCNR2);
+    for (int _ = 0; _ < box_width; _++) {
+      if (_ == PLOT_PADDING-1) {
+        printf(WHT"%lc"RESET, TDWN2);
+      }else{
+        printf(WHT"%lc"RESET, HRZ2);
+      }
+    }
+    printf(WHT"%lc\n"RESET, RLCNR2);
+  }
+}
+
 void plot_all_data(table* cur_table){
-  printf("%s\n", cur_table->name);
+  // print table
+  plot_table(cur_table->name);
+
   column **temp = &cur_table->columns;
+  int col_l = 0;
   while(*temp != NULL){
-    printf("\t|-%s\n", (*temp)->name);
+    // print column
+    plot_column((*temp)->name, col_l, cur_table->column_len);
+
     for (int i = 0; i < cur_table->data_len; i++) {
       if ((*temp)->data_type == INT) {
-        printf("\t|\t|-%d\n", (*temp)->data.int_data[i]);
+        // for column continue line
+        if (col_l == cur_table->column_len-1) {
+          for (int _ = 0; _ < 2 * PLOT_PADDING + 2; _++) printf(WHT" "RESET);
+        }else{
+          for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+          printf(WHT"%lc "RESET,VRT1);
+          for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+        }
+        // for data
+        if (i == cur_table->data_len-1) {
+          printf(WHT"%lc%lc"RESET,LLCNR2,HRZ2);
+        }else{
+          printf(WHT"%lc%lc"RESET,LINTR2,HRZ2);
+        }
+        printf("%d\n", (*temp)->data.int_data[i]);
       }else if ((*temp)->data_type == STRING) {
-        printf("\t|\t|-%s\n", (*temp)->data.string_data[i]);
+        // for column continue line
+        if (col_l == cur_table->column_len-1) {
+          for (int _ = 0; _ < 2 * PLOT_PADDING + 2; _++) printf(WHT" "RESET);
+        }else{
+          for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+          printf(WHT"%lc "RESET,VRT1);
+          for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+        }
+        // for data
+        if (i == cur_table->data_len-1) {
+          printf(WHT"%lc%lc"RESET,LLCNR2,HRZ2);
+        }else{
+          printf(WHT"%lc%lc"RESET,LINTR2,HRZ2);
+        }
+        printf("%s\n", (*temp)->data.string_data[i]);
       }else if ((*temp)->data_type == FLOAT) {
-        printf("\t|\t|-%f\n", (*temp)->data.float_data[i]);
+        // for column continue line
+        if (col_l == cur_table->column_len-1) {
+          for (int _ = 0; _ < 2 * PLOT_PADDING + 2; _++) printf(WHT" "RESET);
+        }else{
+          for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+          printf(WHT"%lc "RESET,VRT1);
+          for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+        }
+        // for data
+        if (i == cur_table->data_len-1) {
+          printf(WHT"%lc%lc"RESET,LLCNR2,HRZ2);
+        }else{
+          printf(WHT"%lc%lc"RESET,LINTR2,HRZ2);
+        }
+        printf("%f\n", (*temp)->data.float_data[i]);
       }
     }
     temp = &(*temp)->next;
+    col_l++;
+  }
+}
+
+void plot_some_data(table* cur_table, bool* get_index){
+
+  int first_truth = 0;
+  bool first_found = false;
+  int last_truth = 0;
+
+  for (int i = 0; i < cur_table->data_len; i++) {
+    if (get_index[i]) {
+      last_truth = i;
+      if (first_found == false) {
+        first_truth = i;
+        first_found = true;
+      }
+    }
+  }
+
+  // print table
+  plot_table(cur_table->name);
+
+  column **temp = &cur_table->columns;
+  int col_l = 0;
+  while(*temp != NULL){
+    // print column
+    plot_column((*temp)->name, col_l, cur_table->column_len);
+
+    for (int curindex = first_truth; curindex <= last_truth; curindex++) {
+      if (get_index[curindex]) {
+        if ((*temp)->data_type == INT) {
+          // for column continue line
+          if (col_l == last_truth) {
+            for (int _ = 0; _ < 2 * PLOT_PADDING + 2; _++) printf(WHT" "RESET);
+          }else{
+            for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+            printf(WHT"%lc "RESET,VRT1);
+            for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+          }
+          // for data
+          if (curindex == cur_table->data_len-1) {
+            printf(WHT"%lc%lc"RESET,LLCNR2,HRZ2);
+          }else{
+            printf(WHT"%lc%lc"RESET,LINTR2,HRZ2);
+          }
+          printf(WHT"["RESET YEL"column=%s index=%d"RESET WHT"]"RESET" %d\n",(*temp)->name, curindex, (*temp)->data.int_data[curindex]);
+        }else if ((*temp)->data_type == STRING) {
+          // for column continue line
+          if (col_l == last_truth) {
+            for (int _ = 0; _ < 2 * PLOT_PADDING + 2; _++) printf(WHT" "RESET);
+          }else{
+            for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+            printf(WHT"%lc "RESET,VRT1);
+            for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+          }
+          // for data
+          if (curindex == cur_table->data_len-1) {
+            printf(WHT"%lc%lc"RESET,LLCNR2,HRZ2);
+          }else{
+            printf(WHT"%lc%lc"RESET,LINTR2,HRZ2);
+          }
+          printf(WHT"["RESET YEL"column=%s index=%d"RESET WHT"]"RESET" %s\n",(*temp)->name, curindex, (*temp)->data.string_data[curindex]);
+        }else if ((*temp)->data_type == FLOAT) {
+          // for column continue line
+          if (col_l == last_truth) {
+            for (int _ = 0; _ < 2 * PLOT_PADDING + 2; _++) printf(WHT" "RESET);
+          }else{
+            for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+            printf(WHT"%lc "RESET,VRT1);
+            for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
+          }
+          // for data
+          if (curindex == cur_table->data_len-1) {
+            printf(WHT"%lc%lc"RESET,LLCNR2,HRZ2);
+          }else{
+            printf(WHT"%lc%lc"RESET,LINTR2,HRZ2);
+          }
+          printf(WHT"["RESET YEL"column=%s index=%d"RESET WHT"]"RESET" %f\n",(*temp)->name, curindex, (*temp)->data.float_data[curindex]);
+        }
+      }
+    }
+    temp = &(*temp)->next;
+    col_l++;
   }
 }
 
 void where_tag(table* t, bool* get_index,logicoperation lo, bool with_not, char* input) {
   // dealing with spliting input
   column **target_col;
-  char* split;
   char column[MAXCHARSIZE] = {0};
   char value[MAXCHARSIZE] = {0};
-  if ((split = strchr(input, '=')) == NULL) {
-    printf("unacceptable no type column\n");
-    exit(0);
-  }else{
-    split_column_value(input,column,value);
-  }
+
+  split_column_value(input,column,value);
 
   // index as condition
   if (strcmp(column,"INDEX") == 0) {
     int index = atoi(value);
-    if (index > 0 && index < t->data_len) {
-      get_index[index] = true;
+    if (index >= 0 && index < t->data_len) {
+      if (lo == AND) {
+        if (get_index[index] == false) {
+          if (with_not) {
+            // do nothing
+          }else{
+            memset(get_index, false, t->data_len * sizeof(bool));
+          }
+        }else{
+          if (with_not) {
+            get_index[index] = false;
+          }else{
+            memset(get_index, false, t->data_len * sizeof(bool));
+            get_index[index] = true;
+          }
+        }
+      }else if (lo == OR) {
+        if (get_index[index] == false) {
+          if (with_not) {
+            memset(get_index, true, t->data_len * sizeof(bool));
+            get_index[index] = false;
+          }else{
+            get_index[index] = true;
+          }
+        }else{
+          if (with_not) {
+            memset(get_index, true, t->data_len * sizeof(bool));
+          }else{
+            // do nothing
+          }
+        }
+      }else{
+        if (with_not) {
+          memset(get_index, true, t->data_len * sizeof(bool));
+          get_index[index] = false;
+        }else{
+          get_index[index] = true;
+        }
+      }
     }
     return;
   }
@@ -350,48 +642,25 @@ void where_tag(table* t, bool* get_index,logicoperation lo, bool with_not, char*
     for (int j = 0; j < t->data_len; j++) {
       // true since AND
       if (get_index[j] == true){
+        /* | xor gate: (with not) ^ (data equal)  |
+         * | with not | data equal | get_index[j] |
+         * | F        | T          | T            |
+         * | F        | F          | F            |
+         * | T        | T          | F            |
+         * | T        | F          | T            |
+         */
         if ((*target_col)->data_type == INT) {
-          if (with_not == false) {
-            if ((*target_col)->data.int_data[j] == atoi(value)) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }else{
-            if ((*target_col)->data.int_data[j] != atoi(value)) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }
+          bool data_eqal = (*target_col)->data.int_data[j] == atoi(value);
+          get_index[j] = Xor(with_not, data_eqal);
+
         }else if ((*target_col)->data_type == STRING) {
-          if (with_not == false) {
-            if (strcmp((*target_col)->data.string_data[j], value) == 0) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }else{
-            if (strcmp((*target_col)->data.string_data[j], value) != 0) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }
+          bool data_eqal = strcmp((*target_col)->data.string_data[j], value);
+          // we need !data_eqal here since the return of strcmp
+          get_index[j] = Xor(with_not, !data_eqal);
+
         }else if ((*target_col)->data_type == FLOAT) {
-          if (with_not == false) {
-            if ((*target_col)->data.float_data[j] == strtof(value,0)) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }else{
-            if ((*target_col)->data.float_data[j] != strtof(value,0)) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }
+          bool data_eqal = (*target_col)->data.float_data[j] == strtof(value,0);
+          get_index[j] = Xor(with_not, data_eqal);
         }
       }
     }
@@ -400,94 +669,34 @@ void where_tag(table* t, bool* get_index,logicoperation lo, bool with_not, char*
       // false since OR
       if (get_index[j] == false){
         if ((*target_col)->data_type == INT) {
-          if (with_not == false) {
-            if ((*target_col)->data.int_data[j] == atoi(value)) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }else{
-            if ((*target_col)->data.int_data[j] != atoi(value)) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }
+          bool data_eqal = (*target_col)->data.int_data[j] == atoi(value);
+          get_index[j] = Xor(with_not, data_eqal);
+
         }else if ((*target_col)->data_type == STRING) {
-          if (with_not == false) {
-            if (strcmp((*target_col)->data.string_data[j], value) == 0) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }else{
-            if (strcmp((*target_col)->data.string_data[j], value) != 0) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }
+          bool data_eqal = strcmp((*target_col)->data.string_data[j], value);
+          // we need !data_eqal here since the return of strcmp
+          get_index[j] = Xor(with_not, !data_eqal);
+
         }else if ((*target_col)->data_type == FLOAT) {
-          if (with_not == false) {
-            if ((*target_col)->data.float_data[j] == strtof(value,0)) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }else{
-            if ((*target_col)->data.float_data[j] != strtof(value,0)) {
-              get_index[j] = true;
-            }else{
-              get_index[j] = false;
-            }
-          }
+          bool data_eqal = (*target_col)->data.float_data[j] == strtof(value,0);
+          get_index[j] = Xor(with_not, data_eqal);
         }
       }
     }
   }else if (lo == NONE){
     for (int j = 0; j < t->data_len; j++) {
       if ((*target_col)->data_type == INT) {
-        if (with_not == false) {
-          if ((*target_col)->data.int_data[j] == atoi(value)) {
-            get_index[j] = true;
-          }else{
-            get_index[j] = false;
-          }
-        }else{
-          if ((*target_col)->data.int_data[j] != atoi(value)) {
-            get_index[j] = true;
-          }else{
-            get_index[j] = false;
-          }
-        }
+        bool data_eqal = (*target_col)->data.int_data[j] == atoi(value);
+        get_index[j] = Xor(with_not, data_eqal);
+
       }else if ((*target_col)->data_type == STRING) {
-        if (with_not == false) {
-          if (strcmp((*target_col)->data.string_data[j], value) == 0) {
-            get_index[j] = true;
-          }else{
-            get_index[j] = false;
-          }
-        }else{
-          if (strcmp((*target_col)->data.string_data[j], value) != 0) {
-            get_index[j] = true;
-          }else{
-            get_index[j] = false;
-          }
-        }
+        bool data_eqal = strcmp((*target_col)->data.string_data[j], value);
+        // we need !data_eqal here since the return of strcmp
+        get_index[j] = Xor(with_not, !data_eqal);
+
       }else if ((*target_col)->data_type == FLOAT) {
-        if (with_not == false) {
-          if ((*target_col)->data.float_data[j] == strtof(value,0)) {
-            get_index[j] = true;
-          }else{
-            get_index[j] = false;
-          }
-        }else{
-          if ((*target_col)->data.float_data[j] != strtof(value,0)) {
-            get_index[j] = true;
-          }else{
-            get_index[j] = false;
-          }
-        }
+        bool data_eqal = (*target_col)->data.float_data[j] == strtof(value,0);
+        get_index[j] = Xor(with_not, data_eqal);
       }
     }
   }
