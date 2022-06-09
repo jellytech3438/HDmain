@@ -57,7 +57,7 @@ const wchar_t
  */
 
 void read_from_file(table* cur_table, FILE* opentable){
-  if (!fread(cur_table,sizeof(table),1,opentable)) {
+  if (!fread(cur_table,sizeof(struct table),1,opentable)) {
     printf("open table error\n");
     exit(0);
   }
@@ -90,20 +90,20 @@ void read_from_file(table* cur_table, FILE* opentable){
 }
 
 void save_data(table* newtable){
- FILE* table = fopen(newtable->name, "w");
+ FILE* opentable = fopen(newtable->name, "w");
  size_t length;
 
- if (fwrite(newtable, sizeof(struct table), 1, table) < 0){
+ if (fwrite(newtable, sizeof(struct table), 1, opentable) < 0){
    printf("%d\n", errno);
  }
 
  length = strlen(newtable->name) + 1;
- fwrite(&length, sizeof(length), 1, table);
- fwrite(newtable->name, 1, length, table);
+ fwrite(&length, sizeof(length), 1, opentable);
+ fwrite(newtable->name, 1, length, opentable);
 
  column *col = newtable->columns;
  while (col != NULL) {
-   if(fwrite(col, sizeof(column), 1, table) < 0){
+   if(fwrite(col, sizeof(column), 1, opentable) < 0){
      printf("%d\n", errno);
    }
    col = col->next;
@@ -245,6 +245,7 @@ void delet_column(table* t, char* c_name){
     return;
   }else if (t->column_len == 1){
     t->columns = NULL;
+    t->column_len--;
     return;
   }else{
     column **pre = &t->columns;
@@ -252,11 +253,8 @@ void delet_column(table* t, char* c_name){
     int i = 0;
     while(*cur != NULL){
       if (strcmp((*cur)->name, c_name) == 0) {
-        // printf("%d %d\n",i , t->column_len-1);
         if (i == t->column_len-1) {
           (*pre)->next = NULL;
-          t->column_len--;
-          return;
         }else if (pre == cur) {
           if ((*pre)->next == NULL) {
             t->columns = NULL;
@@ -265,9 +263,9 @@ void delet_column(table* t, char* c_name){
           }
         }else{
           (*pre)->next = (*cur)->next;
-          t->column_len--;
-          return;
         }
+        t->column_len--;
+        return;
       }
       if (i != 0) {
         pre = &(*pre)->next;
@@ -275,7 +273,6 @@ void delet_column(table* t, char* c_name){
       cur = &(*cur)->next;
       i++;
     }
-    t->column_len--;
     return;
   }
 }
@@ -332,8 +329,6 @@ void create_table(table* newtable){
     printf("cd error");
   }
 
-  printf("%s\n", newtable->name);
-
   int table_file;
   if ((table_file = open(newtable->name, O_WRONLY | O_CREAT | O_APPEND)) < 0) {
     printf("%d create error %d",table_file,errno);
@@ -341,6 +336,8 @@ void create_table(table* newtable){
   }
 
   chmod(newtable->name, 0755);
+
+  printf("create %s successfully\n", newtable->name);
 
   save_data(newtable);
 }
@@ -526,7 +523,7 @@ void plot_some_data(table* cur_table, bool* get_index){
       if (get_index[curindex]) {
         if ((*temp)->data_type == INT) {
           // for column continue line
-          if (col_l == last_truth) {
+          if (col_l == cur_table->column_len-1) {
             for (int _ = 0; _ < 2 * PLOT_PADDING + 2; _++) printf(WHT" "RESET);
           }else{
             for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
@@ -534,7 +531,7 @@ void plot_some_data(table* cur_table, bool* get_index){
             for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
           }
           // for data
-          if (curindex == cur_table->data_len-1) {
+          if (curindex == last_truth) {
             printf(WHT"%lc%lc"RESET,LLCNR2,HRZ2);
           }else{
             printf(WHT"%lc%lc"RESET,LINTR2,HRZ2);
@@ -542,7 +539,7 @@ void plot_some_data(table* cur_table, bool* get_index){
           printf(WHT"["RESET YEL"column=%s index=%d"RESET WHT"]"RESET" %d\n",(*temp)->name, curindex, (*temp)->data.int_data[curindex]);
         }else if ((*temp)->data_type == STRING) {
           // for column continue line
-          if (col_l == last_truth) {
+          if (col_l == cur_table->column_len-1) {
             for (int _ = 0; _ < 2 * PLOT_PADDING + 2; _++) printf(WHT" "RESET);
           }else{
             for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
@@ -550,7 +547,7 @@ void plot_some_data(table* cur_table, bool* get_index){
             for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
           }
           // for data
-          if (curindex == cur_table->data_len-1) {
+          if (curindex == last_truth) {
             printf(WHT"%lc%lc"RESET,LLCNR2,HRZ2);
           }else{
             printf(WHT"%lc%lc"RESET,LINTR2,HRZ2);
@@ -558,7 +555,7 @@ void plot_some_data(table* cur_table, bool* get_index){
           printf(WHT"["RESET YEL"column=%s index=%d"RESET WHT"]"RESET" %s\n",(*temp)->name, curindex, (*temp)->data.string_data[curindex]);
         }else if ((*temp)->data_type == FLOAT) {
           // for column continue line
-          if (col_l == last_truth) {
+          if (col_l == cur_table->column_len-1) {
             for (int _ = 0; _ < 2 * PLOT_PADDING + 2; _++) printf(WHT" "RESET);
           }else{
             for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
@@ -566,7 +563,7 @@ void plot_some_data(table* cur_table, bool* get_index){
             for (int _ = 0; _ < PLOT_PADDING; _++) printf(WHT" "RESET);
           }
           // for data
-          if (curindex == cur_table->data_len-1) {
+          if (curindex == last_truth) {
             printf(WHT"%lc%lc"RESET,LLCNR2,HRZ2);
           }else{
             printf(WHT"%lc%lc"RESET,LINTR2,HRZ2);

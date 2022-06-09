@@ -30,9 +30,9 @@ typedef struct linkedlist{
 } column;
 
 typedef struct table{
-  char *name;
   int column_len;
   int data_len;
+  char *name;
   column *columns;
 } table;
 
