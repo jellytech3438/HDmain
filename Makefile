@@ -7,6 +7,7 @@ MANDIR?=$(PREFIX)/share/man
 OUTDIR=.build
 SRCDIR=./src
 LIBDIR=./lib
+DOCDIR=./docs
 
 .PHONY: all clean install uninstall
 
@@ -15,6 +16,9 @@ OBJECTS = \
 
 OBJECTSCLIENT = \
 					$(SRCDIR)/hdbclient.c
+
+OBJECTMAN = \
+					$(DOCDIR)/hdb.man
 
 all: hdb hdb-client
 
@@ -34,6 +38,7 @@ clean:
 install: all
 		install -m755 hdb $(BINDIR)/hdb
 		install -m755 hdb-client $(BINDIR)/hdb-client
+		cp $(OBJECTMAN) $(MANDIR)/man1/hdb.1
 
 uninstall: all
 		rm $(BINDIR)/hdb

@@ -1,0 +1,41 @@
+.\" Manpage for hdb (hello database)
+.\" git repo: https://github.com/710242/HDmain
+.TH man 8 "2022-06" "0.0.1" "hdb man page"
+.SH NAME
+hdb - CLI for hello database operation
+.SH SYNOPSIS
+hdb [OPTION]
+.SH DESCRIPTION
+hdb is a small database written in c and created by some students in chung cheng unniversity. the main purpose of creating this database is for the grades having greater understands about c language.
+.SH OPTIONS
+.SS -v, --version
+Display current version of hdb.
+.SS -h, --help
+Display help messages
+.SH EXAMPLES
+.SS hdb init - Initialize a new database.
+hdb init mydb
+.SS hdb create - Create a new table.
+hdb create -t table_name -c column1:int column2:string column3:float
+.SS hdb insert - Insert values to the table.
+hdb insert table_name values for_column1 for_column2 ...
+.SS hdb alter - Alter the arrangement of the table.
+hdb alter table_name add column:data_type
+hdb alter table_name drop column
+hdb alter table_name modify column data_type
+.SS hdb update - Update the data in the column.
+hdb update table_name set column_name=new_data where condition
+.SS hdb delete - Delete(clear) the data in the column.
+hdb delete table_name where condition
+.SS hdb rename - Rename table or column.
+hdb rename -t origin_name
+hdb rename -t table_name -c origin_name new_name
+.SS hdb search - Search for certain data.
+hdb search table_name where condition
+hdb search table_name ALL
+.SH BUGS
+This project is currently under developement. If there is any bugs, please help us report to our github.
+.SH AUTHORS
+JasonKe
+
+

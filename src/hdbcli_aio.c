@@ -15,7 +15,7 @@
   #include <sys/syscall.h>
 #endif
 
-#define UNKNW_CMD "unknown command: type \"hdb --help\" for more information"
+#define UNKNW_CMD RED"[Unknown command]"RESET" type \"hdb --help\" for more information"
 #define CREAT_DUP_FILE "the file is already exist. are you sure to create anyway?[y/N]"
 #define OPEN_TYPE_ERROR "can not open the file, please select the file with \".hdb\" extension"
 #define OPEN_BROK_ERROR "the file is broken for some reason, please select the checkpoint file in the \"tmphdb\" folder"
@@ -23,12 +23,6 @@
 #define DELE_WARN "are you sure you want to delete anyway?[Y/N]"
 
 int main(int argc, char **argv){
-
-  if (syscall(__NR_io_uring_register, 0, IORING_UNREGISTER_BUFFERS, NULL, 0) && errno == ENOSYS) {
-      // No io_uring
-      printf("no io uring");
-      exit(0);
-  }
 
   setlocale(LC_ALL, "");
 
@@ -155,14 +149,11 @@ int main(int argc, char **argv){
   } else if (strcmp(argv[1],"insert") == 0) {
     /*
      * insert data to table
-     * ex: hdb insert into table_name values for_column1 for_column2 ...
+     * ex: hdb insert table_name values for_column1 for_column2 ...
      */
      check_hidden_folder();
 
-     /*
-      * prepare to remove "into" tag so it may be 5
-      */
-     if (argc < 6) {
+     if (argc < 5) {
        printf(UNKNW_CMD);
        exit(0);
      }
@@ -170,37 +161,34 @@ int main(int argc, char **argv){
      FILE *opentable;
      table *cur_table = (table*)malloc(sizeof(table));
 
-     for (int i = 2; i < argc; i++) {
-       if (strcmp(argv[i],"into") == 0) {
-         i++;
-         opentable = fopen (argv[i], "r");
-         if (opentable == NULL) {
-           printf("open table error\n");
-           exit(0);
-         }else{
-           read_from_file(cur_table,opentable);
-         }
-       }else if (strcmp(argv[i],"values") == 0) {
-         if (cur_table->column_len != argc-i-1) {
-           printf("error input (wrong len)\n");
-           exit(0);
-         }else{
-           i++;
-           column* temp_col = cur_table->columns;
-           for (int _ = 0; _ < cur_table->column_len; _++) {
-             if (temp_col->data_type == INT) {
-               temp_col->data.int_data[cur_table->data_len] = atoi(argv[i]);
-             }else if (temp_col->data_type == STRING) {
-               strcpy(temp_col->data.string_data[cur_table->data_len], argv[i]);
-             }else if (temp_col->data_type == FLOAT) {
-               temp_col->data.float_data[cur_table->data_len] = strtof(argv[i],0);
-             }
-             temp_col = temp_col->next;
-             i++;
-           }
-           cur_table->data_len++;
-         }
+     opentable = fopen (argv[2], "r");
+     if (opentable == NULL) {
+       printf("open table error\n");
+       exit(0);
+     }else{
+       read_from_file(cur_table,opentable);
+     }
+
+     if (strcmp(argv[3],"values") == 0) {
+       if (cur_table->column_len != argc-4) {
+         printf(RED"[Wrong length input]"RESET" Expected: %d, Receive: %d\n",cur_table->column_len, argc-4);
+         exit(0);
        }
+       column* temp_col = cur_table->columns;
+       for (int i = 4; i < argc; i++) {
+         if (temp_col->data_type == INT) {
+           temp_col->data.int_data[cur_table->data_len] = atoi(argv[i]);
+         }else if (temp_col->data_type == STRING) {
+           strcpy(temp_col->data.string_data[cur_table->data_len], argv[i]);
+         }else if (temp_col->data_type == FLOAT) {
+           temp_col->data.float_data[cur_table->data_len] = strtof(argv[i],0);
+         }
+         temp_col = temp_col->next;
+       }
+       cur_table->data_len++;
+     }else{
+       printf(UNKNW_CMD);
+       exit(0);
      }
 
      save_data(cur_table);
@@ -328,11 +316,12 @@ int main(int argc, char **argv){
            }
          }
        }
-
+     }else{
+       printf(UNKNW_CMD);
+       exit(0);
      }
 
      save_data(cur_table);
-     plot_all_data(cur_table);
 
    } else if (strcmp(argv[1],"update") == 0) {
      /*
@@ -400,6 +389,9 @@ int main(int argc, char **argv){
        }
 
        save_data(cur_table);
+     }else{
+       printf(UNKNW_CMD);
+       exit(0);
      }
 
    } else if (strcmp(argv[1],"delete") == 0) {
@@ -456,6 +448,9 @@ int main(int argc, char **argv){
          }
        }
        save_data(cur_table);
+     }else{
+       printf(UNKNW_CMD);
+       exit(0);
      }
 
   } else if (strcmp(argv[1],"search") == 0) {
@@ -502,15 +497,14 @@ int main(int argc, char **argv){
          where_tag(cur_table,get_index,lo, with_not, argv[cur_arg]);
          cur_arg++;
        }
-
-       for (int index = 0; index < cur_table->data_len; index++) {
-         if (get_index[index] == true) {
-           printf("%d\n", index);
-         }
-       }
+     }else if (strcmp(argv[3],"ALL") == 0){
+       memset(get_index, true, cur_table->data_len * sizeof(bool));
+     }else{
+       printf(UNKNW_CMD);
+       exit(0);
      }
 
-     plot_all_data(cur_table);
+     plot_some_data(cur_table, get_index);
 
   } else if (strcmp(argv[1],"rename") == 0) {
     /*
