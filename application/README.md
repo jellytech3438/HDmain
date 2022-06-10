@@ -2,6 +2,7 @@
 
 ## Description
 - As a landlord, you need to deal with tons of tenants' information. For example, how tenants using theirs rooms, what are theirs names, what are theirs phone numbers when you need to contact them, how much rent they should pay this month, or even which tenant was getting reported such trivias. This code is provide to landlord for them to manage theirs building easily.
+---
 ## Usage
 ### You need to notice these two steps : 
 #### The Thing Need To Do At Beginning
@@ -11,8 +12,10 @@
 - You need to input how many floors and how many rooms in every floors at first, then you can start to enjoy the function.
 #### The Thing Need To Do At The End
 - You can get your own output.txt after executing the code.
+---
 ## Algorithm
 - Command `Show phone number` using bubble sorting to sort the information and print them out.
+---
 ## Main Functions
 ### Whole code's flowchart be like :
 ![avatar](https://i.imgur.com/b0kyx5F.jpg)
