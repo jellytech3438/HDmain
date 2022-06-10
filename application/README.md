@@ -14,7 +14,7 @@
 - You can get your own output.txt after executing the code.
 ---
 ## Algorithm
-- Command `Show phone number` using bubble sort to sort the informations and print them out.
+- Command `Sort` using bubble sort to sort the informations and print them out.
 ---
 ## Main Functions
 ### Whole code's flowchart be like :
