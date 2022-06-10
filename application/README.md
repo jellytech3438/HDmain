@@ -20,7 +20,7 @@
 ### Whole code's flowchart be like :
 ![avatar](https://i.imgur.com/b0kyx5F.jpg)
 #### 1. Search
-- If you want to find out someone who lives in the building and all the information about he/she, it's impossible to find out one piece data from tons of datas, so you can use Command `Search` to finish it.
+- If you want to find out someone who might live in the building and all the information about he/she, it's impossible to find out one piece data from tons of datas, so you can use Command `Search` to finish it.
 #### 2. Delete
 - If you want to delete the tenant that don't live anymore or getting kicked from the building, it's hard to find out one piece data from tons of datas, so you can use Command `Delete` to finish it.
 #### 3. Modify
