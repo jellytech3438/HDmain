@@ -7,6 +7,8 @@
 #### The Thing Need To Do At Beginning
 - You must have a computer with C language environment.
 - You can choose to prepare your own input.txt or not.
+#### The Thing Need To Do During Using
+- You need to input how many floors and how many rooms in every floors at first, then you can start to enjoy the function.
 #### The Thing Need To Do At The End
 - You can get your own output.txt after executing the code.
 ## Algorithm
