@@ -24,7 +24,7 @@
 #### 2. Delete
 - If you want to delete the tenant that don't live anymore or getting kicked from the building, it's hard to find out one piece data from tons of datas, so you can use Command `Delete` to finish it.
 #### 3. Modify
-- If you want to modify one single room's information, it's inconvenient to re-enter every datas, so you can use Command `Modify` to finish it.
+- If you want to modify one single room's informations, it's inconvenient to re-enter every datas, so you can use Command `Modify` to finish.
 #### 4. Traverse
 - If you want to contact the tenant, it's stupid to check every room one by one, then you can use Command `Show Phone Number` to finish it.
 #### 5. Sort
