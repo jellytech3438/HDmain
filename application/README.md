@@ -26,7 +26,7 @@
 #### 3. Modify
 - If you want to modify one single room's information, it's inconvenient to re-enter every datas, so you can use Command `Modify` to finish it.
 #### 4. Traverse
-- If you want to contact someone living in the building, it's stupid to check every room one by one, then you can use Command `Show Phone Number` to finish it.
+- If you want to contact the tenant, it's stupid to check every room one by one, then you can use Command `Show Phone Number` to finish it.
 #### 5. Sort
 - If you want to see all the tenants' information such as rent, but maybe you want to see the sorted datum, that's appearently that you can use Command `Sort` to finish it.
 #### 6. File I/O
