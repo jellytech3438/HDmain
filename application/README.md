@@ -22,7 +22,7 @@
 #### 1. Search
 - If you want to find out someone who lives in the building and all the information about he/she, it's impossible to find out one piece data from tons of datas, so you can use Command `Search` to finish it.
 #### 2. Delete
-- If you want to delete someone that don't live anymore or getting kicked from the building, it's hard to find out one piece data from tons of datas, so you can use Command `Delete` to finish it.
+- If you want to delete the tenant that don't live anymore or getting kicked from the building, it's hard to find out one piece data from tons of datas, so you can use Command `Delete` to finish it.
 #### 3. Modify
 - If you want to modify one single room's information, it's inconvenient to re-enter every datas, so you can use Command `Modify` to finish it.
 #### 4. Traverse
