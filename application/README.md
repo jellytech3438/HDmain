@@ -4,7 +4,7 @@
 - As a landlord, you need to deal with tons of tenants' informations. For example, how tenants using theirs rooms, what are theirs names, what are theirs phone numbers when you need to contact them, how much rent they should pay this month, or even which tenant was getting reported such trivias. This code is provided to landlord for them to manage theirs building easily.
 ---
 ## Usage
-### You need to notice these two steps : 
+### You need to notice these three steps : 
 #### The Thing Need To Do At Beginning
 - You must have a computer with C language environment.
 - You can choose to prepare your own input.txt or not.
