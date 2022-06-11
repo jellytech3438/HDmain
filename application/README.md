@@ -21,6 +21,7 @@
 ![avatar](https://i.imgur.com/b0kyx5F.jpg)
 ### Whole code's Structure Chart be like :
 ![avatar](https://i.imgur.com/YOMVB7h.png)
+### Function
 #### 1. Search
 - If you want to find out someone who might live in the building and all the information about he/she, it's impossible to find out one piece data from tons of datas, so you can use Command `Search` to finish it.
 #### 2. Delete
