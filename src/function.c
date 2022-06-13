@@ -10,6 +10,7 @@
 #include <wchar.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include "../include/datastruct.h"
 
 // print color
@@ -53,7 +54,7 @@ const wchar_t
     RINTR4 = L'\x2562'; // ╢
 
 /*
- * below are others functions
+ * below are file io functions
  */
 
 void read_from_file(table* cur_table, FILE* opentable){
@@ -89,76 +90,109 @@ void read_from_file(table* cur_table, FILE* opentable){
   }
 }
 
-void save_data(table* newtable){
- FILE* opentable = fopen(newtable->name, "w");
- size_t length;
+void write_to_file1(table* newtable){
+  FILE* opentable = fopen(newtable->name, "w");
+  size_t length;
 
- if (fwrite(newtable, sizeof(struct table), 1, opentable) < 0){
+  if (fwrite(newtable, sizeof(struct table), 1, opentable) < 0){
    printf("%d\n", errno);
- }
+  }
 
- length = strlen(newtable->name) + 1;
- fwrite(&length, sizeof(length), 1, opentable);
- fwrite(newtable->name, 1, length, opentable);
+  length = strlen(newtable->name) + 1;
+  fwrite(&length, sizeof(length), 1, opentable);
+  fwrite(newtable->name, 1, length, opentable);
 
- column *col = newtable->columns;
- while (col != NULL) {
+  column *col = newtable->columns;
+  while (col != NULL) {
    if(fwrite(col, sizeof(column), 1, opentable) < 0){
      printf("%d\n", errno);
    }
    col = col->next;
- }
+  }
 }
 
-void split_column_type(char* args, char* column, char* type){
+void read_from_file2(char* tablename, table* buf){
+  int opentable = open(tablename, O_RDONLY);
+  if(opentable < 0){
+    printf("open table error\n");
+    exit(0);
+  }
+  struct iovec *iovecs = (struct iovec*)malloc(sizeof(table));
+
+  iovecs[0].iov_base = buf;
+  iovecs[0].iov_len = sizeof(table);
+
+  int io_index = 1;
+  int col_l = buf->column_len;
+  printf("in read: %d\n", col_l);
+
+  column *cols = (column*)malloc(sizeof(column) * col_l);
+  column *col = buf->columns;
+  for (int i = 0; i < col_l; i++) {
+    iovecs[io_index].iov_base = &cols[i];
+    iovecs[io_index].iov_len = sizeof(column);
+    // printf("in read: %s\n", cols->name);
+    col = &cols[i];
+    io_index++;
+    col = col->next;
+  }
+
+  readv(opentable, iovecs, io_index);
+  printf("read end\n");
+}
+
+void write_to_file2(table* newtable){
+  int opentable = open(newtable->name, O_WRONLY | O_CREAT);
+  if(opentable < 0){
+    printf("open table error\n");
+    exit(0);
+  }
+  chmod(newtable->name,0755);
+  struct iovec *iovecs = (struct iovec*)malloc(sizeof(table) + newtable->column_len * sizeof(column));
+
+  iovecs[0].iov_base = newtable;
+  iovecs[0].iov_len = sizeof(table);
+
+  int io_index = 1;
+
+  column *col = newtable->columns;
+  while (col != NULL) {
+    iovecs[io_index].iov_base = col;
+    iovecs[io_index].iov_len = sizeof(column);
+    io_index++;
+    col = col->next;
+  }
+
+  writev(opentable, iovecs, io_index);
+  printf("write end\n");
+}
+
+/*
+ * below are some basic check and operation functions
+ */
+
+void split_column_value1(char* arg, char* column, char* value, char split_symbol){
   char* split;
-  char* temp;
-  if ((split = strchr(args, ':')) == NULL) {
+  if ((split = strchr(arg, split_symbol)) == NULL) {
     printf("unacceptable no type column\n");
     exit(0);
   }
 
-  int j = 0;
+  int arg_index = 0;
 
-  for (; args[j] != *split; j++) {
-    if (isalnum(args[j]) || args[j] == '_' ) {
-      column[j] = args[j];
+  for (; arg[arg_index] != *split; arg_index++) {
+    if (isalnum(arg[arg_index]) || arg[arg_index] == '_' || arg[arg_index] == '/') {
+      column[arg_index] = arg[arg_index];
     }else{
       printf("unacceptable symbol in column name\n");
       exit(0);
     }
   }
 
-  j++; // jump off the split
+  arg_index++; // jump off the split
 
-  for (int k = 0;args[j] != 0; j++,k++) {
-    type[k] = args[j];
-  }
-
-}
-
-void split_column_value(char* args, char* column, char* value){
-  char* split;
-  if ((split = strchr(args, '=')) == NULL) {
-    printf("unacceptable no type column\n");
-    exit(0);
-  }
-
-  int j = 0;
-
-  for (; args[j] != *split; j++) {
-    if (isalnum(args[j]) || args[j] == '_' ) {
-      column[j] = args[j];
-    }else{
-      printf("unacceptable symbol in column name\n");
-      exit(0);
-    }
-  }
-
-  j++; // jump off the split
-
-  for (int k = 0;args[j] != 0; j++,k++) {
-    value[k] = args[j];
+  for (int v_index = 0;arg[arg_index] != 0; arg_index++,v_index++) {
+    value[v_index] = arg[arg_index];
   }
 }
 
@@ -220,7 +254,7 @@ bool Xor(bool a, bool b){
 }
 
 /*
- * below are the datastruction function
+ * below are the datastructure functions
  */
 
 void add_column(table* t, column* c){
@@ -322,24 +356,6 @@ void init_database(char* pathname){
     }
     chmod("table_history", 0755);
   }
-}
-
-void create_table(table* newtable){
-  if(chdir(".hdb") < 0){
-    printf("cd error");
-  }
-
-  int table_file;
-  if ((table_file = open(newtable->name, O_WRONLY | O_CREAT | O_APPEND)) < 0) {
-    printf("%d create error %d",table_file,errno);
-    return;
-  }
-
-  chmod(newtable->name, 0755);
-
-  printf("create %s successfully\n", newtable->name);
-
-  save_data(newtable);
 }
 
 void delete_data(table* cur_table, int index){
@@ -583,7 +599,7 @@ void where_tag(table* t, bool* get_index,logicoperation lo, bool with_not, char*
   char column[MAXCHARSIZE] = {0};
   char value[MAXCHARSIZE] = {0};
 
-  split_column_value(input,column,value);
+  split_column_value1(input,column,value,'=');
 
   // index as condition
   if (strcmp(column,"INDEX") == 0) {

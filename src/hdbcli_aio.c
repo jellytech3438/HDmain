@@ -11,7 +11,7 @@
   #define OPERATING_SYSTEM "windows"
 #elif defined (__linux__)
   #define OPERATING_SYSTEM "linux"
-  #include <linux/io_uring.h>
+  #include <liburing.h>
   #include <sys/syscall.h>
 #endif
 

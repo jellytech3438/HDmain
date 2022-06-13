@@ -121,7 +121,7 @@ int main(int argc, char **argv){
         while (i < argc) {
           char type[MAXCHARSIZE] = {0};
           column *cur_column = (column*)malloc(sizeof(column));
-          split_column_type(argv[i], cur_column->name, type);
+          split_column_value1(argv[i], cur_column->name, type, ':');
 
           if (strcmp(type, "int") == 0) {
             cur_column->data_type = INT;
@@ -144,7 +144,8 @@ int main(int argc, char **argv){
       }
     }
 
-    create_table(newtable);
+    check_hidden_folder();
+    write_to_file1(newtable);
 
   } else if (strcmp(argv[1],"insert") == 0) {
     /*
@@ -191,7 +192,7 @@ int main(int argc, char **argv){
        exit(0);
      }
 
-     save_data(cur_table);
+     write_to_file1(cur_table);
      plot_all_data(cur_table);
 
    } else if (strcmp(argv[1],"alter") == 0) {
@@ -222,7 +223,7 @@ int main(int argc, char **argv){
      if (strcmp(argv[3],"add") == 0) {
        char type[MAXCHARSIZE] = {0};
        column *newcol = (column*)malloc(sizeof(column));
-       split_column_type(argv[4], newcol->name, type);
+       split_column_value1(argv[4], newcol->name, type, ':');
        if (strcmp(type, "int") == 0) {
          newcol->data_type = INT;
        }else if (strcmp(type, "string") == 0) {
@@ -321,7 +322,7 @@ int main(int argc, char **argv){
        exit(0);
      }
 
-     save_data(cur_table);
+     write_to_file1(cur_table);
 
    } else if (strcmp(argv[1],"update") == 0) {
      /*
@@ -347,7 +348,7 @@ int main(int argc, char **argv){
      if (strcmp(argv[3],"set") == 0) {
        char colname[MAXCHARSIZE] = {0};
        char newdata[MAXCHARSIZE] = {0};
-       split_column_value(argv[4],colname,newdata);
+       split_column_value1(argv[4],colname,newdata,'=');
 
        bool get_index[cur_table->data_len];
        memset(get_index, false, cur_table->data_len * sizeof(bool));
@@ -388,7 +389,7 @@ int main(int argc, char **argv){
          }
        }
 
-       save_data(cur_table);
+       write_to_file1(cur_table);
      }else{
        printf(UNKNW_CMD);
        exit(0);
@@ -447,7 +448,7 @@ int main(int argc, char **argv){
            delete_data(cur_table,index);
          }
        }
-       save_data(cur_table);
+       write_to_file1(cur_table);
      }else{
        printf(UNKNW_CMD);
        exit(0);
@@ -536,7 +537,7 @@ int main(int argc, char **argv){
        }
        column** target_col = find_column_by_name(cur_table, argv[5]);
        strcpy((*target_col)->name,argv[6]);
-       save_data(cur_table);
+       write_to_file1(cur_table);
      }else {
         int result = rename(argv[3], argv[4]);
         if (result == 0) {
@@ -553,7 +554,6 @@ int main(int argc, char **argv){
      * ex: hdb plot [--bar / --line] table_name -x column -y column
      * ==> y can only be INT or FLOAT type
      */
-
   } else {
     printf(UNKNW_CMD);
   }

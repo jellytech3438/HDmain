@@ -4,7 +4,7 @@ This is a simple database that implemented in c. We implement some sql language 
 
 ## Install
 
-You need to have c compiler and make in your os.
+>> You need to have c compiler and make in your os.
 
 ```
 $ make
@@ -17,7 +17,7 @@ For the tutorial and other informations, check out the [hdb cookbook](https://71
 
 ## Accomplish
 
-Below are the finish part of implementing a databse system. We will add more function in the future version.
+>> Below are the finish part of implementing a databse system. We will add more function in the future version.
 
 ### database operation
 - [x] init

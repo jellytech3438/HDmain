@@ -72,13 +72,12 @@ int main(){
     //ask the user whether the first time to use this program
     /******************************************************/
     while(1){
-
         int i = 0;
         printf("First time to use this program?\n");
         printf("[1] Yes. [otherwise] No.  : ");
         scanf("%d", &i);
         if (i == 1){//first time
-            /****************************************************/                                                
+            /****************************************************/
             /*let the user input the info of his or her building*/
             while(1){
                 fprintf(stderr, "Please input how many floor do you have :");
@@ -97,7 +96,6 @@ int main(){
 
             break;
         }else{//not first time
-
             fscanf(fp1, "%d", &floor_num);
             fprintf(fp2,"%d\n", floor_num);
             fscanf(fp1, "%d", &room_num);
@@ -168,7 +166,7 @@ int main(){
                 }
             }else if(search_type == 2){
                 char target_name[NAME_LEN];
-                printf("Please input the name of the target. : ");
+                printf("Please input the name of the target. :");
                 scanf("%s", target_name);
 
                 struct room *target;
@@ -252,7 +250,6 @@ int main(){
     return 0;
 }
 
-
 struct ll* create_building(int floor_num, int room_num){
 
     struct ll *first_floor=NULL, *cur_floor=NULL;
@@ -322,7 +319,7 @@ struct ll* create_building(int floor_num, int room_num){
 struct room* search_room(int tar_number, int floor_num, int room_num, struct ll *cur_floor){
     if(tar_number<=100){
         printf("==============================\n");
-        printf("       Wrong number!\n");
+        printf("    The room doesn't exist!\n");
         printf("==============================\n");
         return NULL;
     }
@@ -391,7 +388,7 @@ void print_info(struct room *target){
     printf("Phone number :              #09-%lld\n", target->exroomer_phone);
     printf("----------------------------------------------------\n");
     printf("ROOMER :                    \"%s\"\n", target->roomer_name);
-    printf("Phone number :              #09-%lld\n", target->roomer_phone);
+    printf("Phone number :              #09-%08lld\n", target->roomer_phone);
     printf("The rent for this month :   %d\n", target->rent);
     printf("====================================================\n");
     return;
@@ -428,6 +425,7 @@ void delete_info(struct room *target){
     strcpy(target->exroomer_name, target->roomer_name);
     strcpy(target->roomer_name, "No_roomer");
     target->exroomer_phone=target->roomer_phone;
+    target->roomer_phone = 0;
     target->room_type=EMPTY_ROOM;
     target->rent=0;
     target->violate=0;
@@ -517,7 +515,7 @@ void change_phone(struct room *target){
         scanf("%lld", &new_number);
         temp = new_number;
         
-        if(temp<999999999&&temp>900000000){
+        if(temp<999999999&&temp>=900000000){
             new_number %= 100000000;
             target->roomer_phone = new_number;
             break;
@@ -561,6 +559,7 @@ void violation_report(struct room *target,int floor_num,int room_num){
                 target->report_rule[target->violate]=rule;
                 target->report[target->violate]=report_room;
                 (target->violate)++;
+                target->rent = (target->rent * 1.1);
                 break;
             }else{
                 printf("There is no such rule!\n");
@@ -590,7 +589,7 @@ void traverse_phone(struct ll *cur_floor){
 
         while(temp_room != NULL){
             int room_num=(100*temp_room->floor)+temp_room->room_num;
-            printf("%d : #09-%lld\n", room_num, temp_room->roomer_phone);
+            printf("%d : #09-%08lld\n", room_num, temp_room->roomer_phone);
             temp_room=temp_room->next;
         }
         printf("----------FLOOR:%d----------\n", temp_floor->floor);
@@ -632,7 +631,7 @@ void sort(struct ll *cur_floor,int floor_num,int room_num){
         }
         printf("===========================================\n");
         for (int i = 0; i < count;i++){
-            printf("Rent:%04d\tRoom:%d\tRoomer:%s\n", store[i].rent, (store[i].floor*100)+store[i].room_num, store[i].roomer_name);
+            printf("Rent:%d\tRoom:%d\tRoomer:%s\n", store[i].rent, (store[i].floor*100)+store[i].room_num, store[i].roomer_name);
         }
         printf("===========================================\n");
     }else if(choose==2){
@@ -684,7 +683,7 @@ void print_floor(struct ll *cur_floor,int floor_num){   // watch info of specifi
             printf("Room:        %d\n",temp_room->room_num+temp_room->floor*100);
             printf("Name:        %s\n",temp_room->roomer_name);
             printf("Rent:        %d\n",temp_room->rent);
-            printf("Roomer phone:#09-%lld\n",temp_room->roomer_phone);
+            printf("Roomer phone:#09-%08lld\n",temp_room->roomer_phone);
 
             temp_room=temp_room->next;
         }
