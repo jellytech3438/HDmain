@@ -57,7 +57,7 @@ const wchar_t
  * below are file io functions
  */
 
-void read_from_file(table* cur_table, FILE* opentable){
+void read_from_file1(table* cur_table, FILE* opentable){
   if (!fread(cur_table,sizeof(struct table),1,opentable)) {
     printf("open table error\n");
     exit(0);
@@ -111,67 +111,11 @@ void write_to_file1(table* newtable){
   }
 }
 
-void read_from_file2(char* tablename, table* buf){
-  int opentable = open(tablename, O_RDONLY);
-  if(opentable < 0){
-    printf("open table error\n");
-    exit(0);
-  }
-  struct iovec *iovecs = (struct iovec*)malloc(sizeof(table));
-
-  iovecs[0].iov_base = buf;
-  iovecs[0].iov_len = sizeof(table);
-
-  int io_index = 1;
-  int col_l = buf->column_len;
-  printf("in read: %d\n", col_l);
-
-  column *cols = (column*)malloc(sizeof(column) * col_l);
-  column *col = buf->columns;
-  for (int i = 0; i < col_l; i++) {
-    iovecs[io_index].iov_base = &cols[i];
-    iovecs[io_index].iov_len = sizeof(column);
-    // printf("in read: %s\n", cols->name);
-    col = &cols[i];
-    io_index++;
-    col = col->next;
-  }
-
-  readv(opentable, iovecs, io_index);
-  printf("read end\n");
-}
-
-void write_to_file2(table* newtable){
-  int opentable = open(newtable->name, O_WRONLY | O_CREAT);
-  if(opentable < 0){
-    printf("open table error\n");
-    exit(0);
-  }
-  chmod(newtable->name,0755);
-  struct iovec *iovecs = (struct iovec*)malloc(sizeof(table) + newtable->column_len * sizeof(column));
-
-  iovecs[0].iov_base = newtable;
-  iovecs[0].iov_len = sizeof(table);
-
-  int io_index = 1;
-
-  column *col = newtable->columns;
-  while (col != NULL) {
-    iovecs[io_index].iov_base = col;
-    iovecs[io_index].iov_len = sizeof(column);
-    io_index++;
-    col = col->next;
-  }
-
-  writev(opentable, iovecs, io_index);
-  printf("write end\n");
-}
-
 /*
  * below are uio version of file io (still in experiments)
  */
 
-void read_from_file3(char* tablename, table* buf, char* t_name, column* columns){
+void read_from_file2(char* tablename, table* buf, char* t_name, column* columns){
   int opentable = open(tablename, O_RDONLY);
   if(opentable < 0){
     printf("open table error\n");
@@ -206,35 +150,30 @@ void read_from_file3(char* tablename, table* buf, char* t_name, column* columns)
   printf("read end\n");
 }
 
-void write_to_file(table* newtable){
+void write_to_file2(table* newtable){
   int opentable = open(newtable->name, O_WRONLY | O_CREAT);
   if(opentable < 0){
     printf("open table error\n");
     exit(0);
   }
   chmod(newtable->name,0755);
+  struct iovec *iovecs = (struct iovec*)malloc(sizeof(table) + newtable->column_len * sizeof(column));
 
-  column cols[3];
+  iovecs[0].iov_base = newtable;
+  iovecs[0].iov_len = sizeof(table);
+
+  int io_index = 1;
+
   column *col = newtable->columns;
-  int col_ind = 0;
   while (col != NULL) {
-    cols[col_ind] = *col;
-    col_ind++;
+    iovecs[io_index].iov_base = col;
+    iovecs[io_index].iov_len = sizeof(column);
+    io_index++;
     col = col->next;
   }
 
-  int iovind = 1;
-  struct iovec iov[3];
-
-  iov[0].iov_base = newtable;
-  iov[0].iov_len = sizeof(table);
-
-  for (int i = 0; i < 3; i++, iovind++) {
-    iov[iovind].iov_base = &cols[i];
-    iov[iovind].iov_len = sizeof(column);
-  }
-
-  writev(opentable,iov,iovind);
+  writev(opentable, iovecs, io_index);
+  printf("write end\n");
 }
 
 /*

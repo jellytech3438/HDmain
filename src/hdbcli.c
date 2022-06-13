@@ -167,7 +167,7 @@ int main(int argc, char **argv){
        printf("open table error\n");
        exit(0);
      }else{
-       read_from_file(cur_table,opentable);
+       read_from_file1(cur_table,opentable);
      }
 
      if (strcmp(argv[3],"values") == 0) {
@@ -217,7 +217,7 @@ int main(int argc, char **argv){
        printf("open table error\n");
        exit(0);
      }else{
-       read_from_file(cur_table,opentable);
+       read_from_file1(cur_table,opentable);
      }
 
      if (strcmp(argv[3],"add") == 0) {
@@ -342,7 +342,7 @@ int main(int argc, char **argv){
        printf("open table error\n");
        exit(0);
      }else{
-       read_from_file(cur_table,opentable);
+       read_from_file1(cur_table,opentable);
      }
 
      if (strcmp(argv[3],"set") == 0) {
@@ -416,7 +416,7 @@ int main(int argc, char **argv){
        printf("open table error\n");
        exit(0);
      }else{
-       read_from_file(cur_table,opentable);
+       read_from_file1(cur_table,opentable);
      }
 
      bool get_index[cur_table->data_len];
@@ -472,7 +472,7 @@ int main(int argc, char **argv){
        printf("open table error\n");
        exit(0);
      }else{
-       read_from_file(cur_table,opentable);
+       read_from_file1(cur_table,opentable);
      }
 
      bool get_index[cur_table->data_len];
@@ -527,7 +527,7 @@ int main(int argc, char **argv){
        printf("open table error\n");
        exit(0);
      }else{
-       read_from_file(cur_table,opentable);
+       read_from_file1(cur_table,opentable);
      }
 
      if (strcmp(argv[4], "-c") == 0 || strcmp(argv[4], "column") == 0) {

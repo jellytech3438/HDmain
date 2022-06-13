@@ -64,7 +64,7 @@ I have tried to rewrite our File I/O into io_uring through liburing api, but i k
 
 * history
 
-There is a file will be created while initialize a new database called table_history. This is alse a future update for recording all the operation in the current database.
+There is a file will be created while initialize a new database called table_history. This is also a future update for recording all the operation in the current database.
 
 * more  functions
 

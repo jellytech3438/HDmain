@@ -5,7 +5,7 @@
 /*
  * below are file io functions
  */
-extern void read_from_file(table* cur_table,FILE* opentable);
+extern void read_from_file1(table* cur_table,FILE* opentable);
 extern void write_to_file1(table *newtable);
 
 /*

@@ -1,22 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
+#include <locale.h>
 #include "../include/datastruct.h"
 #include "../include/function.h"
 
 #define NAME_LEN 30
+#define EMPTY_ROOM 0
+#define FOR_ACCOMMODATE 1
+#define FOR_OFFICE 2
+#define FOR_WAREHOUSE 3
 
-enum room_type {
-  EMPTY_ROOM,
-  FOR_ACCOMMODATE,
-  FOR_OFFICE,
-  FOR_WAREHOUSE
-};
+int first_time_use = 0;
 
 struct room{
     int floor;
     int room_num;
-    enum room_type room_type;
+    int room_type;
 
     char exroomer_name[NAME_LEN];
     long long int exroomer_phone;
@@ -54,9 +55,32 @@ void punish(struct room *target);
 void traverse_phone(struct ll *cur_floor);
 void sort(struct ll *cur_floor, int floor_num,int room_num);
 void print_floor(struct ll *cur_floor,int floor_num);
-void convert_to_table(struct ll *cur_floor);
+
+void getroom(struct room* room,table* t,int index);
+void add_room_to_columns(struct room* _room,column* c,int index);
+table* init_table();
+
+void save_building(struct ll *building, table* t){
+  column* c = t->columns;
+  int cnt = 0;
+  struct ll* _floor = building;
+  while (_floor != NULL) {
+    struct room* _room = _floor->HEAD;
+    while (_room != NULL) {
+      add_room_to_columns(_room,c,cnt);
+      t->data_len++;
+      _room = _room->next;
+      cnt++;
+    }
+
+    _floor = _floor->next;
+  }
+  printf("finish\n");
+}
 
 int main(){
+    setlocale(LC_ALL, "");
+    table* newtable = init_table();
     /************************************************************************************/
     FILE *fp_in=fopen("input.txt", "w");
     FILE *fp_out=fopen("output.txt", "r");
@@ -78,12 +102,10 @@ int main(){
     //ask the user whether the first time to use this program
     /******************************************************/
     while(1){
-
-        int i = 0;
         printf("First time to use this program?\n");
         printf("[1] Yes. [otherwise] No.  : ");
-        scanf("%d", &i);
-        if (i == 1){//first time
+        scanf("%d", &first_time_use);
+        if (first_time_use == 1){//first time
             /****************************************************/
             /*let the user input the info of his or her building*/
             while(1){
@@ -103,7 +125,6 @@ int main(){
 
             break;
         }else{//not first time
-
             fscanf(fp1, "%d", &floor_num);
             fprintf(fp2,"%d\n", floor_num);
             fscanf(fp1, "%d", &room_num);
@@ -142,14 +163,12 @@ int main(){
     /*deal with the command that user makes*/
     while(1){
         int command;
-        printf("Command : [1] search. [2] delete. [3] modify. [4] show phone number. [5] sort. [6] watch info. [7] finish.\n");
-        printf("What do you want to do ? :");
+        printf("Command : [1] search. [2] delete. [3] modify. [4] show phone number. [5] sort. [6] watch info. [7] finish.\nWhat do you want to do ? :");
         scanf("%d", &command);
 
         if(command == 1){
             int search_type;
-            printf("[1] room number. [2] roomer name.\n");
-            printf("Please choose the type of target you want to search. : ");
+            printf("[1] room number. [2] roomer name.\nPlease choose the type of target you want to search. : ");
             scanf("%d", &search_type);
 
             if(search_type == 1){
@@ -174,7 +193,7 @@ int main(){
                 }
             }else if(search_type == 2){
                 char target_name[NAME_LEN];
-                printf("Please input the name of the target. : ");
+                printf("Please input the name of the target. :");
                 scanf("%s", target_name);
 
                 struct room *target;
@@ -224,48 +243,25 @@ int main(){
         }else if(command == 6){
             print_floor(building,floor_num);
         }else if(command == 7){
-            //update the roomer info
-            struct ll *temp_floor=building;
-            while(temp_floor != NULL){     //store the sturcture for the next time to use
-                struct room *temp_room=temp_floor->HEAD;
-                while(temp_room != NULL){
-                    fprintf(fp2, "%d\n", temp_room->room_type);
-                    fprintf(fp2, "%s\n", temp_room->exroomer_name);
-                    fprintf(fp2, "%lld\n", temp_room->exroomer_phone);
-                    fprintf(fp2, "%s\n", temp_room->roomer_name);
-                    fprintf(fp2, "%lld\n", temp_room->roomer_phone);
-                    fprintf(fp2, "%d\n", temp_room->rent);
-                    fprintf(fp2, "%d\n", temp_room->violate);
-                    for(int i=0; i<5; i++){
-                        fprintf(fp2, "%d\n", temp_room->report[i]);
-                    }
-                    for(int i=0; i<5; i++){
-                        fprintf(fp2, "%d\n", temp_room->report_rule[i]);
-                    }
-                    temp_room=temp_room->next;
-                }
-                temp_floor=temp_floor->next;
-            }
-            break;
+          save_building(building,newtable);
+          plot_all_data(newtable);
+          write_to_file1(newtable);
+          break;
         }else{
             printf("===============================\n");
             printf("    The command is invalid!\n");
             printf("===============================\n");
         }
     }
-    fclose(fp1);
-    fclose(fp2);
     return 0;
 }
-
 
 struct ll* create_building(int floor_num, int room_num){
 
     struct ll *first_floor=NULL, *cur_floor=NULL;
 
     for(int i=1; i<=floor_num; i++){        //create linked list of floors
-        struct ll *new_floor;
-        new_floor=(struct ll*)malloc(sizeof(struct ll));
+        struct ll *new_floor = (struct ll*)malloc(sizeof(struct ll));
 
         new_floor->floor=i;
 
@@ -288,8 +284,7 @@ struct ll* create_building(int floor_num, int room_num){
 
         for(int j=0; j<room_num; j++){
 
-            struct room *new_room;
-            new_room=(struct room*)malloc(sizeof(struct room));
+            struct room *new_room = (struct room*)malloc(sizeof(struct room));
 
             //every room should be initialized at first
             new_room->room_num=j+1;
@@ -328,7 +323,7 @@ struct ll* create_building(int floor_num, int room_num){
 struct room* search_room(int tar_number, int floor_num, int room_num, struct ll *cur_floor){
     if(tar_number<=100){
         printf("==============================\n");
-        printf("       Wrong number!\n");
+        printf("    The room doesn't exist!\n");
         printf("==============================\n");
         return NULL;
     }
@@ -397,7 +392,7 @@ void print_info(struct room *target){
     printf("Phone number :              #09-%lld\n", target->exroomer_phone);
     printf("----------------------------------------------------\n");
     printf("ROOMER :                    \"%s\"\n", target->roomer_name);
-    printf("Phone number :              #09-%lld\n", target->roomer_phone);
+    printf("Phone number :              #09-%08lld\n", target->roomer_phone);
     printf("The rent for this month :   %d\n", target->rent);
     printf("====================================================\n");
     return;
@@ -434,6 +429,7 @@ void delete_info(struct room *target){
     strcpy(target->exroomer_name, target->roomer_name);
     strcpy(target->roomer_name, "No_roomer");
     target->exroomer_phone=target->roomer_phone;
+    target->roomer_phone = 0;
     target->room_type=EMPTY_ROOM;
     target->rent=0;
     target->violate=0;
@@ -497,7 +493,7 @@ void change_type(struct room *target){
         if(new_type>3||new_type<0){
             printf("Please input right type!\n");
         }else{
-            target->room_type=(enum room_type)new_type;
+            target->room_type=new_type;
             break;
         }
     }
@@ -523,7 +519,7 @@ void change_phone(struct room *target){
         scanf("%lld", &new_number);
         temp = new_number;
 
-        if(temp<999999999&&temp>900000000){
+        if(temp<999999999&&temp>=900000000){
             new_number %= 100000000;
             target->roomer_phone = new_number;
             break;
@@ -567,6 +563,7 @@ void violation_report(struct room *target,int floor_num,int room_num){
                 target->report_rule[target->violate]=rule;
                 target->report[target->violate]=report_room;
                 (target->violate)++;
+                target->rent = (target->rent * 1.1);
                 break;
             }else{
                 printf("There is no such rule!\n");
@@ -596,7 +593,7 @@ void traverse_phone(struct ll *cur_floor){
 
         while(temp_room != NULL){
             int room_num=(100*temp_room->floor)+temp_room->room_num;
-            printf("%d : #09-%lld\n", room_num, temp_room->roomer_phone);
+            printf("%d : #09-%08lld\n", room_num, temp_room->roomer_phone);
             temp_room=temp_room->next;
         }
         printf("----------FLOOR:%d----------\n", temp_floor->floor);
@@ -638,7 +635,7 @@ void sort(struct ll *cur_floor,int floor_num,int room_num){
         }
         printf("===========================================\n");
         for (int i = 0; i < count;i++){
-            printf("Rent:%04d\tRoom:%d\tRoomer:%s\n", store[i].rent, (store[i].floor*100)+store[i].room_num, store[i].roomer_name);
+            printf("Rent:%d\tRoom:%d\tRoomer:%s\n", store[i].rent, (store[i].floor*100)+store[i].room_num, store[i].roomer_name);
         }
         printf("===========================================\n");
     }else if(choose==2){
@@ -690,7 +687,7 @@ void print_floor(struct ll *cur_floor,int floor_num){   // watch info of specifi
             printf("Room:        %d\n",temp_room->room_num+temp_room->floor*100);
             printf("Name:        %s\n",temp_room->roomer_name);
             printf("Rent:        %d\n",temp_room->rent);
-            printf("Roomer phone:#09-%lld\n",temp_room->roomer_phone);
+            printf("Roomer phone:#09-%08lld\n",temp_room->roomer_phone);
 
             temp_room=temp_room->next;
         }
@@ -699,36 +696,115 @@ void print_floor(struct ll *cur_floor,int floor_num){   // watch info of specifi
     return ;
 }
 
-void convert_to_table(struct ll *cur_floor){
+void getroom(struct room* room,table* t,int index){
+  column* cur_column = t->columns;
+  if(strcmp(cur_column->name,"floor") == 0){
+    room->floor = cur_column->data.int_data[index];
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"room_num") == 0){
+    room->room_num = cur_column->data.int_data[index];
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"room_type") == 0){
+    room->room_type = cur_column->data.int_data[index];
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"exroomer_name") == 0){
+    strcpy(room->exroomer_name, cur_column->data.string_data[index]);
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"exroomer_phone") == 0){
+    room->exroomer_phone = cur_column->data.int_data[index];
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"roomer_name") == 0){
+    strcpy(room->roomer_name, cur_column->data.string_data[index]);
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"roomer_phone") == 0){
+    room->roomer_phone = cur_column->data.int_data[index];
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"rent") == 0){
+    room->rent = cur_column->data.int_data[index];
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"violate") == 0){
+    room->violate = cur_column->data.int_data[index];
+  }
+}
+
+void add_room_to_columns(struct room* room,column* cur_column,int index){
+  if(strcmp(cur_column->name,"floor") == 0){
+    cur_column->data.int_data[index] = room->floor;
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"room_num") == 0){
+    cur_column->data.int_data[index] = room->room_num;
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"room_type") == 0){
+    cur_column->data.int_data[index] = room->room_type;
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"exroomer_name") == 0){
+    strcpy(cur_column->data.string_data[index],room->exroomer_name);
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"exroomer_phone") == 0){
+    cur_column->data.int_data[index] = room->exroomer_phone;
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"roomer_name") == 0){
+    strcpy(cur_column->data.string_data[index],room->roomer_name);
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"roomer_phone") == 0){
+    cur_column->data.int_data[index] = room->roomer_phone;
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"rent") == 0){
+    cur_column->data.int_data[index] = room->rent;
+  }
+  cur_column = cur_column->next;
+  if(strcmp(cur_column->name,"violate") == 0){
+    cur_column->data.int_data[index] = room->violate;
+  }
+}
+
+table* init_table(){
   table* newtable = (table*)malloc(sizeof(table));
-  char t_name[MAXCHARSIZE];
-  sprintf(t_name, "floor_%d", cur_floor->floor);
-  newtable->name = t_name;
+  newtable->name = "my_building";
   newtable->data_len = 0;
   newtable->column_len = 9;
-  column cur_column = {.data_type=INT};
-  strcpy(cur_column.name,"floor");
-  add_column(newtable,&cur_column);
-  cur_column.data_type=INT;
-  strcpy(cur_column.name,"room_num");
-  add_column(newtable,&cur_column);
-  cur_column.data_type=INT;
-  strcpy(cur_column.name,"room_type");
-  add_column(newtable,&cur_column);
-  cur_column.data_type=STRING;
-  strcpy(cur_column.name,"exroomer_name");
-  add_column(newtable,&cur_column);
-  cur_column.data_type=INT;
-  strcpy(cur_column.name,"exroomer_phone");
-  add_column(newtable,&cur_column);
-  cur_column.data_type=STRING;
-  strcpy(cur_column.name,"roomer_name");
-  add_column(newtable,&cur_column);
-  cur_column.data_type=INT;
-  strcpy(cur_column.name,"roomer_phone");
-  add_column(newtable,&cur_column);
-  strcpy(cur_column.name,"rent");
-  add_column(newtable,&cur_column);
-  strcpy(cur_column.name,"violate");
-  add_column(newtable,&cur_column);
+  column* cols = (column*)malloc(sizeof(column) * 9);
+  cols[0].data_type = INT;
+  strcpy(cols[0].name,"floor");
+  add_column(newtable,&cols[0]);
+  cols[1].data_type=INT;
+  strcpy(cols[1].name,"room_num");
+  add_column(newtable,&cols[1]);
+  cols[2].data_type=INT;
+  strcpy(cols[2].name,"room_type");
+  add_column(newtable,&cols[2]);
+  cols[3].data_type=STRING;
+  strcpy(cols[3].name,"exroomer_name");
+  add_column(newtable,&cols[3]);
+  cols[4].data_type=INT;
+  strcpy(cols[4].name,"exroomer_phone");
+  add_column(newtable,&cols[4]);
+  cols[5].data_type=STRING;
+  strcpy(cols[5].name,"roomer_name");
+  add_column(newtable,&cols[5]);
+  cols[6].data_type=INT;
+  strcpy(cols[6].name,"roomer_phone");
+  add_column(newtable,&cols[6]);
+  cols[7].data_type=INT;
+  strcpy(cols[7].name,"rent");
+  add_column(newtable,&cols[7]);
+  cols[8].data_type=INT;
+  strcpy(cols[8].name,"violate");
+  add_column(newtable,&cols[8]);
+  return newtable;
 }
