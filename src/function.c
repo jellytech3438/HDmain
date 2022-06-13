@@ -168,6 +168,76 @@ void write_to_file2(table* newtable){
 }
 
 /*
+ * below are uio version of file io (still in experiments)
+ */
+
+void read_from_file3(char* tablename, table* buf, char* t_name, column* columns){
+  int opentable = open(tablename, O_RDONLY);
+  if(opentable < 0){
+    printf("open table error\n");
+    exit(0);
+  }
+
+  // why do we need this??????
+  char buf1[1];
+
+  int iovind = 1;
+
+  struct iovec iov[3];
+
+  iov[0].iov_base = buf;
+  iov[0].iov_len = sizeof(table);
+
+  for (int i = 0; i < 3; i++, iovind++) {
+    iov[iovind].iov_base = columns+i;
+    iov[iovind].iov_len = sizeof(column);
+  }
+
+  readv(opentable, iov, iovind);
+
+  // printf("buf1: %s", buf1);
+  printf("data_len: %d\n", buf->data_len);
+
+  printf("name: %s\n", (columns+0)->name);
+  for (int i = 0; i < buf->data_len; i++) {
+    printf("%d\n", (columns+1)->data.int_data[i]);
+  }
+
+  printf("read end\n");
+}
+
+void write_to_file(table* newtable){
+  int opentable = open(newtable->name, O_WRONLY | O_CREAT);
+  if(opentable < 0){
+    printf("open table error\n");
+    exit(0);
+  }
+  chmod(newtable->name,0755);
+
+  column cols[3];
+  column *col = newtable->columns;
+  int col_ind = 0;
+  while (col != NULL) {
+    cols[col_ind] = *col;
+    col_ind++;
+    col = col->next;
+  }
+
+  int iovind = 1;
+  struct iovec iov[3];
+
+  iov[0].iov_base = newtable;
+  iov[0].iov_len = sizeof(table);
+
+  for (int i = 0; i < 3; i++, iovind++) {
+    iov[iovind].iov_base = &cols[i];
+    iov[iovind].iov_len = sizeof(column);
+  }
+
+  writev(opentable,iov,iovind);
+}
+
+/*
  * below are some basic check and operation functions
  */
 

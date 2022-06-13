@@ -69,3 +69,7 @@ There is a file will be created while initialize a new database called table_his
 * more  functions
 
 As those commands that not been clicked in the Accomplish part, i will complete those functions in the future, hopefully?
+
+* client app
+
+Client app will have more functions than CLI, since CLI is designed for script to complete the work easily. The addition functions for client app are such like SELECT to decrease the time users typing table name for example.
