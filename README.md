@@ -4,7 +4,7 @@ This is a simple database that implemented in c. We implement some sql language 
 
 ## Install
 
->> You need to have c compiler and make in your os.
+> You need to have c compiler and make in your os.
 
 ```
 $ make
@@ -13,11 +13,11 @@ $ make install
 
 ## Cookbook
 
-For the tutorial and other informations, check out the [hdb cookbook](https://710242.github.io/HDcookbook/):
+For the tutorial and other informations, check out the [hdb cookbook](https://710242.github.io/HDcookbook/)
 
 ## Accomplish
 
->> Below are the finish part of implementing a databse system. We will add more function in the future version.
+> Below are the finish part of implementing a databse system. We will add more function in the future version.
 
 ### database operation
 - [x] init
@@ -58,4 +58,14 @@ For the tutorial and other informations, check out the [hdb cookbook](https://71
 
 ## TODO
 
-since this is a small project for school, we're probably not doing future update for this program.
+* io_uring
+
+I have tried to rewrite our File I/O into io_uring through liburing api, but i keep failing since the write size of the structure. I hope i can complete this in the future.
+
+* history
+
+There is a file will be created while initialize a new database called table_history. This is alse a future update for recording all the operation in the current database.
+
+* more  functions
+
+As those commands that not been clicked in the Accomplish part, i will complete those functions in the future, hopefully?
