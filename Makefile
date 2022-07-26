@@ -14,34 +14,26 @@ DOCDIR=./docs
 OBJECTS = \
 					$(SRCDIR)/hdbcli.c
 
-OBJECTSCLIENT = \
-					$(SRCDIR)/hdbclient.c
-
 OBJECTMAN = \
 					$(DOCDIR)/hdb.man
 
-all: hdb hdb-client
+all: hdb 
 
 %(OUTPUT)/%.o: $(SRCDIR)/%.c
 		@mkdir -p $(OUTDIR)
 		$(CC) -o
 
 hdb: $(OBJECTS)
-		$(CC) -o $@ $^
-
-hdb-client: $(OBJECTSCLIENT)
-		$(CC) -o $@ $^
+		$(CC) -o $@ $^ -llua -ldl -lm
 
 clean:
-		rm -f hdbcli.o hdbclient.o
+		rm -f hdbcli.o 
 
 install: all
 		install -m755 hdb $(BINDIR)/hdb
-		install -m755 hdb-client $(BINDIR)/hdb-client
 		mkdir -p $(MANDIR)/man1
 		cp $(OBJECTMAN) $(MANDIR)/man1/hdb.1
 
 uninstall: all
 		rm $(BINDIR)/hdb
-		rm $(BINDIR)/hdb-client
 		rm $(MANDIR)/man1/hdb.1

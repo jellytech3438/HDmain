@@ -26,6 +26,9 @@ int main(int argc, char **argv){
 
   setlocale(LC_ALL, "");
 
+  lua_State *L = luaL_newstate();
+  luaL_openlibs(L);
+  
   choosen choose;
 
   /*
@@ -557,5 +560,7 @@ int main(int argc, char **argv){
   } else {
     printf(UNKNW_CMD);
   }
+  
+  lua_close(L);
 
 }

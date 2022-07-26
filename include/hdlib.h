@@ -21,6 +21,9 @@
 #include <fcntl.h>
 #include <wchar.h>
 #include <locale.h>
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
 #include "function.h"
 #include "datastruct.h"
 #define min(a,b) ((a) < (b) ? (a) : (b))
