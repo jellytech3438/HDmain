@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include "../src/tpl.c"
 #include "../include/datastruct.h"
 #include "printfunction.c"
 #include "iofunction.c"
@@ -77,6 +78,72 @@ void write_to_file2(table* newtable){
 
   writev(opentable, iovecs, io_index);
   printf("write end\n");
+}
+
+/*
+ * use tpl to serialize data into file
+ */
+
+void add_to_list(column **list, column *new){
+  if(*list == NULL) {
+    *list = new;
+    return;
+  }
+  column *tmp = *list;
+  while(tmp->next != NULL){
+    tmp = tmp->next;
+  }
+  tmp->next = new;
+}
+
+void write_to_file3(table *newtable){
+  int opentable = open(newtable->name, O_WRONLY | O_CREAT);
+  if(opentable < 0){
+    printf("open table error\n");
+    exit(0);
+  }
+  chmod(newtable->name,0755);
+   
+  column tmp;   
+  tpl_node *tn;
+  
+  tn = tpl_map("iisA(S(c#i))",newtable->column_len,newtable->data_len,newtable->name,&tmp,MAXCHARSIZE);
+  tpl_pack(tn,0);
+
+  for(column *i = newtable->columns; i!=NULL; i = i->next){
+    tmp = *i;
+    tpl_pack(tn,1);
+  }
+
+  tpl_dump(tn,TPL_FILE,"test.tpl");
+  tpl_free(tn);
+}
+
+void read_from_file3(table* cur_table, FILE* opentable){
+  if (!fread(cur_table,sizeof(struct table),1,opentable)) {
+    printf("open table error\n");
+    exit(0);
+  }
+  
+  tpl_node *tn;
+  column tmp, *new;
+  
+  tn = tpl_map("iisA(S(c#i))",cur_table->column_len,cur_table->data_len,cur_table->name,&tmp,MAXCHARSIZE);
+  tpl_load(tn, TPL_FILE, opentable);
+
+  tpl_unpack(tn,0);
+  
+  while( tpl_unpack(tn,1) > 0) {
+    new = (column*)malloc(sizeof(column));
+    *new = tmp;
+    if (new){  
+      add_to_list(&(cur_table->columns), new);
+    }else{
+      break;
+    }
+  }
+  
+  tpl_free(tn);
 }
 
 /*

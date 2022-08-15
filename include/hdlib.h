@@ -24,6 +24,7 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+#include "tpl.h"
 #include "function.h"
 #include "datastruct.h"
 #define min(a,b) ((a) < (b) ? (a) : (b))
